@@ -1,74 +1,76 @@
 <p align="center">
-  <img src="https://www.openminion.com/brand/openminion-logo.png" alt="OpenMinion logo" width="128" />
+  <img src="https://www.openminion.com/brand/openminion-logo.png" alt="Unicode Animatio logo" width="128" />
 </p>
 
-<h1 align="center">unicode-animatio</h1>
+<h1 align="center">Unicode Animatio</h1>
 
 <p align="center">
-  <strong>Lightweight Unicode and ASCII terminal animations for Python.</strong>
+  <strong>Lightweight Unicode and ASCII terminal animation data for Python.</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/openminion/unicode-animatio">GitHub</a>
-  · <a href="#install">Install</a>
-  · <a href="#what-the-package-provides">What Ships</a>
+  · <a href="https://pypi.org/project/unicode-animatio/">PyPI</a>
   · <a href="https://www.openminion.com">Website</a>
+  · <a href="docs/README.md">Docs</a>
   · <a href="https://x.com/OpenMinion">X</a>
 </p>
 
 <p align="center">
-  <img alt="Package version" src="https://img.shields.io/badge/package-0.0.3-3775A9">
-  <img alt="Python" src="https://img.shields.io/badge/python-3.9%2B-3775A9">
+  <a href="https://pypi.org/project/unicode-animatio/"><img alt="PyPI" src="https://img.shields.io/pypi/v/unicode-animatio?cacheSeconds=300"></a>
+  <a href="https://pypi.org/project/unicode-animatio/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/unicode-animatio?cacheSeconds=300"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
   <img alt="Status" src="https://img.shields.io/badge/status-beta-5B8DEF">
 </p>
 
-- 58 terminal animation families as raw frame data
-- 10 categories for browsing and selection
-- typed Python API with JS-style compatibility aliases
-- built-in terminal preview CLI and local browser demo
-- no runtime dependencies
+Unicode Animatio `v0.0.3` packages deterministic animation frames and timing
+for terminals and other text renderers. It has no runtime dependencies and
+does not take ownership of colors, labels, layout, progress, or task state.
 
-`unicode-animatio` is the public package and repo name. The Python import root
-remains `unicode_animations`, while the public CLI entrypoints use
-`unicode-animatio` and `unicode-animatio-web`.
+The distribution and CLI name is `unicode-animatio`. The Python import root is
+`unicode_animations`.
 
 ## Read This First
 
-1. Use [Install](#install) to add the package.
-2. Use [Quick start](#quick-start) for Python frame data.
-3. Use [CLI and demos](#cli-and-demos) to preview animations.
-4. Use [Available animations](#available-animations) to choose a preset.
-5. Use [What the package does not provide](#what-the-package-does-not-provide)
-   before expecting progress bars, orchestration, or UI framework adapters.
+1. Read [At a Glance](#at-a-glance) for the package naming and renderer
+   boundary.
+2. Follow [Install](#install) and [Quick Start](#quick-start) to read animation
+   frames from Python.
+3. Use [Choosing a Preset](#choosing-a-preset) to select a category.
+4. Use the terminal or browser preview commands before integrating a renderer.
+5. Read [Development](#development) before changing the package.
 
-## Official project links
+## Trust and Brand Safety
 
-- GitHub: `https://github.com/openminion/unicode-animatio`
-- Issues: `https://github.com/openminion/unicode-animatio/issues`
+- Official GitHub: <https://github.com/openminion/unicode-animatio>
+- Official website: <https://www.openminion.com>
+- Official X account: <https://x.com/OpenMinion>
 
-## What the package provides
+Unicode Animatio has no official token, coin, NFT, airdrop, staking program,
+treasury product, or investment offering. Any claim otherwise is unauthorized
+and should be treated as a scam.
 
-`unicode-animatio` provides:
+## At a Glance
 
-- immutable spinner frame data via `unicode_animations.spinners`
-- canonical names and categories via `SPINNER_NAMES`, `CATEGORY_NAMES`, and
-  `SPINNER_CATEGORIES`
-- braille-grid helpers: `make_grid` and `grid_to_braille`
-- compatibility aliases: `makeGrid` and `gridToBraille`
-- a structural animation provider entry point for consumers such as OpenMinion
-- a terminal preview CLI: `unicode-animatio`
-- a local web preview CLI: `unicode-animatio-web`
+| | |
+| --- | --- |
+| Distribution | `unicode-animatio` |
+| Import root | `unicode_animations` |
+| Current line | `v0.0.3` beta |
+| Python | 3.9+ |
+| Catalog | 58 animations across 10 categories |
+| Runtime dependencies | None |
+| Not the claim | Progress tracking, task orchestration, or framework rendering |
 
-## What the package does not provide
+## Common Commands
 
-This package does not provide:
-
-- async terminal rendering frameworks
-- progress bars, task orchestration, or job-state tracking
-- ANSI styling, background colors, or status text in frame data
-- hosted demo infrastructure or remote APIs
-- framework-specific adapters for Rich, Textual, or Typer
+```bash
+python3 -m pip install unicode-animatio
+unicode-animatio --list
+unicode-animatio --categories
+unicode-animatio helix
+unicode-animatio-web --port 8765
+```
 
 ## Install
 
@@ -78,13 +80,15 @@ Install from PyPI:
 python3 -m pip install unicode-animatio
 ```
 
-Editable install during local development:
+For a source checkout:
 
 ```bash
 python3 -m pip install -e ".[dev]"
 ```
 
-## Quick start
+## Quick Start
+
+Read raw frames and timing:
 
 ```python
 from unicode_animations import spinners
@@ -94,70 +98,59 @@ print(spinner.frames)
 print(spinner.interval)
 ```
 
-Grid helpers:
-
-```python
-from unicode_animations import grid_to_braille, make_grid
-
-grid = make_grid(4, 4)
-grid[0][0] = True
-grid[1][1] = True
-grid[2][2] = True
-grid[3][3] = True
-
-print(grid_to_braille(grid))
-```
-
-Provider boundary:
+Use the provider boundary when the consumer should not depend on the catalog
+implementation:
 
 ```python
 from unicode_animations import get_provider
 
 provider = get_provider()
-spec = provider.get("helix")
+animation = provider.get("helix")
+
 print(provider.provider_id)
-print(spec.frames)
-print(spec.interval_ms)
+print(animation.frames)
+print(animation.interval_ms)
 ```
 
-The provider returns raw frame strings and timing only. Foreground colors,
-backgrounds, reduced-motion behavior, labels, and layout remain owned by the
-rendering application.
-
-## CLI and demos
-
-Terminal preview:
+Preview the catalog in a terminal:
 
 ```bash
-unicode-animatio --list
-unicode-animatio --categories
 unicode-animatio --list --category graph
-unicode-animatio
-unicode-animatio helix
 unicode-animatio edgepulse
-unicode-animatio helix --color auto --foreground gray
 ```
 
-Local browser demo:
+Preview it in a local browser:
 
 ```bash
 unicode-animatio --web
-unicode-animatio-web --port 8765
-unicode-animatio-web --host 0.0.0.0 --port 8765 --no-open
 ```
 
-Python API terminal demo:
+## What Unicode Animatio Provides
 
-```bash
-python examples/terminal_demo.py
-python examples/terminal_demo.py --seconds-per-spinner 2 --loops 2
-python examples/terminal_demo.py helix
-python examples/terminal_demo.py --list
-```
+- immutable animation frame data and millisecond timing
+- canonical animation names, categories, and category lookup
+- braille-grid helpers: `make_grid` and `grid_to_braille`
+- compatibility aliases: `makeGrid` and `gridToBraille`
+- a structural provider entry point for host applications
+- a terminal preview CLI: `unicode-animatio`
+- a local browser preview CLI: `unicode-animatio-web`
+- a PEP 561 type marker and typed public API
+
+## What Unicode Animatio Does Not Provide
+
+- terminal UI or async rendering frameworks
+- progress bars, task orchestration, or job-state tracking
+- renderer colors, backgrounds, labels, or layout
+- automatic reduced-motion or accessibility policy
+- hosted demos or remote APIs
+- framework-specific Rich, Textual, or Typer adapters
+
+The host renderer owns presentation and accessibility. The package returns raw
+frames and timing only.
 
 ## Available animations
 
-The package ships 58 deterministic animations across 10 categories:
+The catalog currently contains 58 deterministic animations:
 
 | Category | Presets |
 | --- | --- |
@@ -172,82 +165,60 @@ The package ships 58 deterministic animations across 10 categories:
 | `alert` | `sparkle`, `warningpulse`, `heartbeat`, `ping`, `flashdot` |
 | `dense` | `checkerboard`, `plasma`, `noise`, `moire`, `shimmergrid` |
 
-Selected first-frame examples:
+## Choosing a Preset
 
-| Name | Category | First frame | Interval |
-| --- | --- | --- | ---: |
-| `braille` | `subtle` | `⠋` | 80ms |
-| `focusbeam` | `scan` | `----` | 90ms |
-| `synapse` | `thinking` | `*..` | 100ms |
-| `terminalblink` | `tool` | `$_` | 160ms |
-| `packetflow` | `data` | `[>]---` | 100ms |
-| `edgepulse` | `graph` | `o---o` | 90ms |
-| `meter` | `progress` | `[   ]` | 120ms |
-| `shimmergrid` | `dense` | `.+.` | 90ms |
+| Category | Good fit |
+| --- | --- |
+| `subtle` | Calm background activity |
+| `scan` | Indexing, searching, or retrieval |
+| `build` | Assembly and compilation |
+| `thinking` | Model or reasoning activity |
+| `tool` | Command and tool execution |
+| `data` | Streaming and data movement |
+| `graph` | Relation traversal and knowledge graphs |
+| `progress` | Steady forward motion |
+| `alert` | Short attention states |
+| `dense` | High-energy or diagnostic displays |
 
-## Choosing a preset
-
-- Use `subtle` for calm background activity.
-- Use `scan` or `data` for indexing and retrieval work.
-- Use `thinking` for model activity and `tool` for command execution.
-- Use `graph` for relation traversal and knowledge-graph work.
-- Use `progress` when steady forward motion matters.
-- Use `alert` sparingly for attention states.
-
-For a live preview:
+Inspect exact names and timing rather than selecting from memory:
 
 ```bash
-unicode-animatio --list
 unicode-animatio --categories
-unicode-animatio --list --category graph
-unicode-animatio edgepulse --foreground gray
-unicode-animatio --web
+unicode-animatio --list --category data
+unicode-animatio packetflow
 ```
 
 ## Development
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -e ".[dev]"
-python3 -m pytest -q
-python3 -m ruff check .
-python3 -m build
+make dev-install
+make hooks-install
+make check
 ```
 
-## Package docs
+Use `make release-check` before publishing or changing the documented public
+surface.
 
-- [Getting started](docs/getting-started.md)
-- [Package docs index](docs/README.md)
-- [API compatibility](API_COMPATIBILITY.md)
-- [Release guide](RELEASING.md)
-- [Source tree owner map](docs/source-tree-owner-map.md)
+## Docs and Release
 
-## Trust and Brand Safety
+- [`docs/README.md`](docs/README.md): package documentation map
+- [`docs/getting-started.md`](docs/getting-started.md): package usage and
+  contributor bootstrap
+- [`docs/source-tree-owner-map.md`](docs/source-tree-owner-map.md): code owners
+  and package layout
+- [`API_COMPATIBILITY.md`](API_COMPATIBILITY.md): public names and provider
+  contract
+- [`RELEASING.md`](RELEASING.md): release and publish flow
 
-- Official GitHub: `https://github.com/openminion/unicode-animatio`
-- Official website: `https://www.openminion.com`
-- Official X account: `https://x.com/OpenMinion`
+Questions and bug reports belong in
+[GitHub Issues](https://github.com/openminion/unicode-animatio/issues).
 
-`unicode-animatio` has no official token, coin, NFT, airdrop, staking
-program, treasury product, or investment offering. Any claim otherwise is
-unauthorized and should be treated as a scam.
+## License and Brand-use Boundary
 
-## License and brand-use boundary
+- Source code license: MIT
+- Brand/trademark grant: none
 
-- Source code license: `MIT`
-- Brand/trademark grant: `none`
-
-The software license grants rights to use, modify, and redistribute the code.
-It does **not** grant rights to use the unicode-animatio or OpenMinion
-names, logos, branding, website identity, or social identity except for
-truthful attribution. Forks, clones, and derivative distributions must not
-present themselves as the official unicode-animatio package or imply
-affiliation, endorsement, or maintenance by unicode-animatio or OpenMinion
-contributors unless that is actually true.
-
-## Community
-
-- [Contributing](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [License (MIT)](LICENSE)
+The license grants rights to use, modify, and redistribute the code. It does
+not grant rights to present a fork, clone, token, website, or social account as
+the official Unicode Animatio or OpenMinion project or imply affiliation or
+endorsement.
