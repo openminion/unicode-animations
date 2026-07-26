@@ -35,9 +35,11 @@ The distribution and CLI name is `unicode-animatio`. The Python import root is
 1. Read [At a Glance](#at-a-glance) for the package naming and renderer
    boundary.
 2. Follow [Install](#install) and [Quick Start](#quick-start) to read animation
-   frames from Python.
-3. Use [Choosing a Preset](#choosing-a-preset) to select a category.
-4. Use the terminal or browser preview commands before integrating a renderer.
+   frames and render a first spinner.
+3. Use [Python Examples](#python-examples) for braille grids, provider
+   integration, and category lookup.
+4. Use [Preview Every Animation](#preview-every-animation) before choosing a
+   preset.
 5. Read [Development](#development) before changing the package.
 
 ## Trust and Brand Safety
@@ -88,7 +90,8 @@ python3 -m pip install -e ".[dev]"
 
 ## Quick Start
 
-Read raw frames and timing:
+Animation records contain immutable `frames` plus an `interval` in
+milliseconds:
 
 ```python
 from unicode_animations import spinners
@@ -97,6 +100,51 @@ spinner = spinners["braille"]
 print(spinner.frames)
 print(spinner.interval)
 ```
+
+The host application owns rendering. A minimal terminal loop looks like this:
+
+```python
+from itertools import cycle, islice
+import sys
+import time
+
+from unicode_animations import spinners
+
+spinner = spinners["braille"]
+
+for frame in islice(cycle(spinner.frames), 30):
+    sys.stdout.write(f"\r{frame} Working...")
+    sys.stdout.flush()
+    time.sleep(spinner.interval / 1000)
+
+sys.stdout.write("\n")
+```
+
+This example stops after 30 frames. A real renderer should also handle
+cancellation, cursor cleanup, reduced-motion preferences, and non-interactive
+output.
+
+## Python Examples
+
+### Build a braille frame
+
+Use `make_grid` to create a dot grid and `grid_to_braille` to convert it to
+Unicode braille cells:
+
+```python
+from unicode_animations import grid_to_braille, make_grid
+
+grid = make_grid(rows=4, cols=4)
+grid[0][0] = True
+grid[1][1] = True
+
+print(grid_to_braille(grid))
+```
+
+The compatibility aliases `makeGrid` and `gridToBraille` remain available, but
+new code should use the snake-case names.
+
+### Use the provider boundary
 
 Use the provider boundary when the consumer should not depend on the catalog
 implementation:
@@ -112,18 +160,99 @@ print(animation.frames)
 print(animation.interval_ms)
 ```
 
-Preview the catalog in a terminal:
+The provider exposes structural animation records with `frames` and
+`interval_ms`. This is the preferred boundary for plugin hosts and applications
+that may swap animation providers.
+
+### Browse by category
+
+Use the category API when an application wants to offer a constrained preset
+picker:
+
+```python
+from unicode_animations import SPINNER_CATEGORIES, spinner_names_for_category
+
+print(spinner_names_for_category("graph"))
+print(SPINNER_CATEGORIES["edgepulse"])
+```
+
+`spinner_names_for_category()` returns canonical preset names.
+`SPINNER_CATEGORIES` maps each preset name to its category.
+
+## Preview Every Animation
+
+The preview tools are the fastest way to understand the catalog. They render
+the raw records but are not application UI frameworks.
+
+| Command | What it does |
+| --- | --- |
+| `unicode-animatio --list` | Lists every preset with its category and timing |
+| `unicode-animatio --categories` | Lists the available categories |
+| `unicode-animatio --list --category graph` | Lists only graph presets |
+| `unicode-animatio` | Cycles through the full catalog in a terminal |
+| `unicode-animatio helix` | Runs one preset until interrupted |
+| `unicode-animatio --web` | Opens the local browser gallery |
+| `unicode-animatio-web` | Starts the browser gallery server directly |
+
+### Terminal preview
+
+Discover presets:
 
 ```bash
+unicode-animatio --list
+unicode-animatio --categories
 unicode-animatio --list --category graph
+```
+
+Cycle through all animations or run one by name:
+
+```bash
+unicode-animatio
+unicode-animatio helix
 unicode-animatio edgepulse
 ```
 
-Preview it in a local browser:
+The preview respects terminal color capability by default. Override it when
+testing a renderer:
+
+```bash
+unicode-animatio helix --color auto --foreground gray
+```
+
+Press `Ctrl+C` to stop a running terminal preview.
+
+### Browser preview
+
+Open the local gallery through either command:
 
 ```bash
 unicode-animatio --web
+unicode-animatio-web --port 8765
 ```
+
+For a remote development machine:
+
+```bash
+unicode-animatio-web --host 0.0.0.0 --port 8765 --no-open
+```
+
+Binding to `0.0.0.0` exposes the preview server to the machine's network. Use
+that option only on a trusted development network.
+
+### Source-checkout terminal demo
+
+The repository includes a longer Python API demo that can cycle through the
+catalog or focus on one preset:
+
+```bash
+python examples/terminal_demo.py
+python examples/terminal_demo.py --seconds-per-spinner 2 --loops 2
+python examples/terminal_demo.py helix
+python examples/terminal_demo.py --list
+```
+
+This script is part of the source checkout; it is not installed as a console
+command.
 
 ## What Unicode Animatio Provides
 
@@ -164,6 +293,20 @@ The catalog currently contains 58 deterministic animations:
 | `progress` | `fillsweep`, `meter`, `ladder`, `risingblocks`, `fillbar2` |
 | `alert` | `sparkle`, `warningpulse`, `heartbeat`, `ping`, `flashdot` |
 | `dense` | `checkerboard`, `plasma`, `noise`, `moire`, `shimmergrid` |
+
+Representative first frames show the range of the catalog. The browser and
+terminal previews show the complete frame sequences.
+
+| Preset | Category | First frame | Interval |
+| --- | --- | --- | --- |
+| `braille` | `subtle` | `⠋` | 80 ms |
+| `focusbeam` | `scan` | `----` | 90 ms |
+| `synapse` | `thinking` | `*..` | 100 ms |
+| `terminalblink` | `tool` | `$_` | 160 ms |
+| `packetflow` | `data` | `[>]---` | 100 ms |
+| `edgepulse` | `graph` | `o---o` | 90 ms |
+| `meter` | `progress` | `[   ]` | 120 ms |
+| `shimmergrid` | `dense` | `.+.` | 90 ms |
 
 ## Choosing a Preset
 
@@ -212,6 +355,13 @@ surface.
 
 Questions and bug reports belong in
 [GitHub Issues](https://github.com/openminion/unicode-animatio/issues).
+
+## Community
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [GitHub Issues](https://github.com/openminion/unicode-animatio/issues)
+- [OpenMinion organization](https://github.com/openminion)
 
 ## License and Brand-use Boundary
 
