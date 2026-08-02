@@ -1,25 +1,30 @@
-# unicode-animatio docs
+# unicode-animatio Docs
 
 This directory is the package-local documentation root for
-`unicode-animatio`.
+`unicode-animatio`, a standalone package for deterministic terminal animation
+frames, preset metadata, and local preview tools.
 
-## Package docs
+## Start Here
 
-- [Getting started](getting-started.md)
-- [Source tree owner map](source-tree-owner-map.md)
-- [Engineering patterns](engineering-patterns.md)
-- [Code quality enforcement](code-quality-enforcement.md)
-- [Cleanup workflow](cleanup-workflow.md)
+| If you want to... | Read |
+| --- | --- |
+| Install the package and run a first preset | [Getting started](getting-started.md) |
+| Understand package ownership and file layout | [Source tree owner map](source-tree-owner-map.md) |
+| Contribute without adding avoidable complexity | [Engineering patterns](engineering-patterns.md) |
+| Run the expected checks | [Code quality enforcement](code-quality-enforcement.md) |
+| Do broad cleanup safely | [Cleanup workflow](cleanup-workflow.md) |
 
-## Root package docs
+## Root Package Docs
 
-- [README](../README.md)
-- [API compatibility](../API_COMPATIBILITY.md)
-- [Code quality](../CODE_QUALITY.md)
-- [Release guide](../RELEASING.md)
+- [README](../README.md): public package overview, CLI examples, catalog notes,
+  and brand/security boundary.
+- [API compatibility](../API_COMPATIBILITY.md): supported import roots and
+  stability posture.
+- [Code quality](../CODE_QUALITY.md): contributor quality rules.
+- [Release guide](../RELEASING.md): package release flow.
 
-## Intended audience
+## Public Package Boundary
 
-These docs are public package docs for external users and contributors. They
-should stay portable, avoid machine-local path guidance, and describe the
-package as a standalone Python distribution.
+These docs are for external users and contributors. Keep them portable, avoid
+machine-local path assumptions, and describe `unicode-animatio` as a standalone
+Python distribution rather than as an OpenMinion-only implementation detail.
