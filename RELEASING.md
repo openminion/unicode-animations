@@ -69,14 +69,14 @@ python3 -m venv "$TMP_VENV"
 `docs/reference/package-release-process.md`:
 
 1. prepare and validate an RC branch,
-2. push an RC tag such as `v0.0.2rc1` to publish to TestPyPI,
+2. push an RC tag such as `v<version>rc1` to publish to TestPyPI,
 3. install and smoke-test the RC artifact from TestPyPI,
 4. prepare and validate the final non-RC branch,
 5. dispatch the `Release` workflow from that final branch with
    `target=testpypi`,
 6. install and smoke-test the final TestPyPI artifact,
-7. push the final non-RC tag such as `v0.0.2` to publish to PyPI,
-8. create the GitHub Release using the bare version title, such as `0.0.2`.
+7. push the final non-RC tag such as `v<version>` to publish to PyPI,
+8. create the GitHub Release using the bare version title, such as `<version>`.
 
 ## GitHub Actions Trusted Publishing
 
