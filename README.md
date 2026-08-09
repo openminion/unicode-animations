@@ -70,6 +70,8 @@ and should be treated as a scam.
 python3 -m pip install unicode-animatio
 unicode-animatio --list
 unicode-animatio --categories
+unicode-animatio --search graph --json
+unicode-animatio --show edgepulse
 unicode-animatio helix
 unicode-animatio-web --port 8765
 ```
@@ -154,15 +156,18 @@ from unicode_animations import get_provider
 
 provider = get_provider()
 animation = provider.get("helix")
+metadata = provider.describe("helix")
 
 print(provider.provider_id)
 print(animation.frames)
 print(animation.interval_ms)
+print(metadata.tags)
 ```
 
-The provider exposes structural animation records with `frames` and
-`interval_ms`. This is the preferred boundary for plugin hosts and applications
-that may swap animation providers.
+The provider exposes structural animation records with `frames`, `interval_ms`,
+category, tags, frame count, width hints, motion hints, and usage descriptions.
+This is the preferred boundary for plugin hosts and applications that may swap
+animation providers.
 
 ### Browse by category
 
@@ -170,14 +175,23 @@ Use the category API when an application wants to offer a constrained preset
 picker:
 
 ```python
-from unicode_animations import SPINNER_CATEGORIES, spinner_names_for_category
+from unicode_animations import (
+    SPINNER_CATEGORIES,
+    metadata_for_spinner,
+    search_spinner_names,
+    spinner_names_for_category,
+)
 
 print(spinner_names_for_category("graph"))
 print(SPINNER_CATEGORIES["edgepulse"])
+print(search_spinner_names("knowledge", category="graph"))
+print(metadata_for_spinner("edgepulse").description)
 ```
 
 `spinner_names_for_category()` returns canonical preset names.
 `SPINNER_CATEGORIES` maps each preset name to its category.
+`search_spinner_names()` searches preset names, categories, and tags in catalog
+order.
 
 ## Preview Every Animation
 
@@ -189,6 +203,9 @@ the raw records but are not application UI frameworks.
 | `unicode-animatio --list` | Lists every preset with its category and timing |
 | `unicode-animatio --categories` | Lists the available categories |
 | `unicode-animatio --list --category graph` | Lists only graph presets |
+| `unicode-animatio --search knowledge --category graph` | Searches names, categories, and tags |
+| `unicode-animatio --show edgepulse` | Shows one preset with integration metadata |
+| `unicode-animatio --list --category graph --json` | Prints machine-readable metadata |
 | `unicode-animatio` | Cycles through the full catalog in a terminal |
 | `unicode-animatio helix` | Runs one preset until interrupted |
 | `unicode-animatio --web` | Opens the local browser gallery |
@@ -202,6 +219,9 @@ Discover presets:
 unicode-animatio --list
 unicode-animatio --categories
 unicode-animatio --list --category graph
+unicode-animatio --search knowledge --category graph
+unicode-animatio --show edgepulse
+unicode-animatio --show edgepulse --json
 ```
 
 Cycle through all animations or run one by name:
@@ -230,6 +250,10 @@ unicode-animatio --web
 unicode-animatio-web --port 8765
 ```
 
+The browser gallery includes category chips, search, theme toggle,
+reduced-motion toggle, a selected-preset details panel, and a copyable provider
+snippet for host integration.
+
 For a remote development machine:
 
 ```bash
@@ -257,7 +281,7 @@ command.
 ## What Unicode Animatio Provides
 
 - immutable animation frame data and millisecond timing
-- canonical animation names, categories, and category lookup
+- canonical animation names, categories, metadata, and searchable tags
 - braille-grid helpers: `make_grid` and `grid_to_braille`
 - compatibility aliases: `makeGrid` and `gridToBraille`
 - a structural provider entry point for host applications
@@ -270,7 +294,7 @@ command.
 - terminal UI or async rendering frameworks
 - progress bars, task orchestration, or job-state tracking
 - renderer colors, backgrounds, labels, or layout
-- automatic reduced-motion or accessibility policy
+- automatic reduced-motion or accessibility policy beyond metadata hints
 - hosted demos or remote APIs
 - framework-specific Rich, Textual, or Typer adapters
 
@@ -328,8 +352,14 @@ Inspect exact names and timing rather than selecting from memory:
 ```bash
 unicode-animatio --categories
 unicode-animatio --list --category data
+unicode-animatio --search stream
 unicode-animatio packetflow
 ```
+
+For public-facing previews, start with `edgepulse`, `packetflow`, `helix`,
+`synapse`, `focusbeam`, and `shimmergrid`. They show graph traversal, data
+movement, thinking, inspection, and high-energy showcase states without needing
+an application renderer.
 
 ## Development
 

@@ -10,221 +10,520 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import TypedDict
 from urllib.parse import urlparse
 
-from .catalog import SPINNER_CATEGORIES, SPINNER_NAMES, spinners
+from .catalog import (
+    SPINNER_NAMES,
+    metadata_for_spinner,
+    spinners,
+)
 
 
 class SpinnerPayload(TypedDict):
     frames: list[str]
     interval: int
+    interval_ms: int
     category: str
+    tags: list[str]
+    frame_count: int
+    frame_width: int
+    preview_frame: str
+    motion: str
+    description: str
 
 
-def build_spinner_payload() -> dict[str, SpinnerPayload]:
-    """Return JSON-friendly spinner data for the web preview."""
-    return {
-        name: {
-            "frames": list(spinners[name].frames),
-            "interval": spinners[name].interval,
-            "category": SPINNER_CATEGORIES[name],
-        }
-        for name in SPINNER_NAMES
-    }
-
-
-def build_demo_html() -> str:
-    """Return demo HTML that loads spinner data from /spinners.json."""
-    html = """<!DOCTYPE html>
+DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>unicode-animatio</title>
+  <title>unicode-animatio gallery</title>
   <style>
     :root {
-      --bg: #14171a;
-      --panel: #1b2128;
-      --border: #2f3945;
-      --text: #ecf2f8;
-      --muted: #a7b4c2;
-      --soft: #8191a3;
-      --accent: #2ec4b6;
+      --bg: #101316;
+      --band: #161b20;
+      --panel: #1f252b;
+      --panel-strong: #252c33;
+      --border: #38434e;
+      --text: #f0f5f8;
+      --muted: #aab6c2;
+      --soft: #7d8b98;
+      --accent: #31d4bd;
+      --accent-2: #f3c969;
+      --danger: #f27a7a;
+      --shadow: rgba(0, 0, 0, 0.24);
       --mono: 'Cascadia Mono', 'SF Mono', 'Menlo', monospace;
-      --sans: 'Avenir Next', 'Segoe UI', sans-serif;
+      --sans: 'Inter', 'Avenir Next', 'Segoe UI', sans-serif;
     }
 
     [data-theme="light"] {
-      --bg: #f2f6f9;
+      --bg: #f5f8fb;
+      --band: #eaf0f6;
       --panel: #ffffff;
-      --border: #d8e1ea;
-      --text: #1d2935;
-      --muted: #516276;
-      --soft: #76879a;
+      --panel-strong: #f2f6fa;
+      --border: #d5e0ea;
+      --text: #18222d;
+      --muted: #526274;
+      --soft: #718295;
       --accent: #0b8f83;
+      --accent-2: #926b12;
+      --danger: #b34242;
+      --shadow: rgba(29, 41, 53, 0.1);
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: var(--sans);
       color: var(--text);
-      background:
-        radial-gradient(circle at 0% 0%, rgba(46, 196, 182, 0.16), transparent 42%),
-        radial-gradient(circle at 100% 100%, rgba(11, 143, 131, 0.14), transparent 45%),
-        var(--bg);
+      background: linear-gradient(180deg, var(--band), var(--bg) 22rem);
+    }
+
+    button, input {
+      font: inherit;
     }
 
     .wrap {
-      max-width: 860px;
+      max-width: 1160px;
       margin: 0 auto;
-      padding: 2.2rem 1.2rem 3rem;
+      padding: 2rem 1.1rem 3rem;
     }
 
     .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 1rem;
-      margin-bottom: 1.25rem;
+      align-items: start;
+      margin-bottom: 1.2rem;
     }
 
     h1 {
       margin: 0;
-      font-size: 1.75rem;
-      letter-spacing: -0.02em;
+      font-size: 2rem;
+      line-height: 1.08;
     }
 
     .sub {
-      margin-top: 0.45rem;
-      color: var(--soft);
-      font-size: 0.94rem;
+      max-width: 46rem;
+      margin-top: 0.55rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
-    .toggle {
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(12rem, 1fr) auto auto;
+      gap: 0.7rem;
+      align-items: center;
+      margin-bottom: 0.8rem;
+    }
+
+    .search {
+      width: 100%;
+      min-height: 2.6rem;
       border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 0.8rem;
+      color: var(--text);
       background: var(--panel);
-      color: var(--muted);
-      border-radius: 10px;
-      padding: 0.45rem 0.7rem;
-      font-size: 0.78rem;
+      outline: none;
+    }
+
+    .button {
+      min-height: 2.6rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0 0.8rem;
+      color: var(--text);
+      background: var(--panel);
       cursor: pointer;
     }
 
-    .panel {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: color-mix(in srgb, var(--panel) 93%, transparent);
-      overflow: hidden;
+    .button[aria-pressed="true"] {
+      border-color: color-mix(in srgb, var(--accent) 72%, var(--border));
+      color: var(--accent);
     }
 
-    .row {
+    .chips {
       display: flex;
-      align-items: center;
-      gap: 0.9rem;
-      padding: 0.64rem 0.95rem;
-      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 1rem;
     }
 
-    .row:last-child { border-bottom: none; }
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.42rem 0.7rem;
+      color: var(--muted);
+      background: var(--panel);
+      cursor: pointer;
+    }
+
+    .chip[aria-pressed="true"] {
+      border-color: var(--accent);
+      color: var(--text);
+      background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(17rem, 21rem);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+      gap: 0.75rem;
+    }
+
+    .card {
+      min-height: 10.6rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      color: var(--text);
+      background: var(--panel);
+      box-shadow: 0 12px 28px var(--shadow);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .card[aria-selected="true"] {
+      border-color: var(--accent);
+      outline: 2px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    }
 
     .frame {
-      width: 6.2rem;
-      text-align: center;
+      display: grid;
+      min-height: 3.5rem;
+      place-items: center;
+      border-radius: 6px;
       color: var(--accent);
+      background: var(--panel-strong);
       font-family: var(--mono);
-      white-space: nowrap;
-      font-size: 1rem;
+      font-size: 1.35rem;
+      font-weight: 700;
+      white-space: pre;
+    }
+
+    .card[data-motion="high"] .frame {
+      color: var(--danger);
+    }
+
+    .card[data-category="graph"] .frame,
+    .card[data-category="data"] .frame {
+      color: var(--accent-2);
+    }
+
+    .card-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.7rem;
+      margin-top: 0.7rem;
       font-weight: 700;
     }
 
-    .name {
-      font-weight: 600;
-      font-size: 0.9rem;
-      min-width: 8rem;
+    .category {
+      color: var(--soft);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
     }
 
     .meta {
-      margin-left: auto;
-      color: var(--soft);
-      font-size: 0.78rem;
+      margin-top: 0.55rem;
+      color: var(--muted);
       font-family: var(--mono);
+      font-size: 0.74rem;
+      line-height: 1.45;
     }
 
-    .foot {
-      margin-top: 1rem;
-      color: var(--soft);
-      font-size: 0.78rem;
-      font-family: var(--mono);
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.55rem;
     }
 
-    @media (max-width: 640px) {
-      .row {
-        flex-wrap: wrap;
-        gap: 0.45rem 0.8rem;
+    .tag {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.2rem 0.42rem;
+      color: var(--soft);
+      font-size: 0.7rem;
+    }
+
+    .details {
+      position: sticky;
+      top: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: var(--panel);
+      box-shadow: 0 12px 28px var(--shadow);
+    }
+
+    .detail-frame {
+      display: grid;
+      min-height: 6rem;
+      place-items: center;
+      border-radius: 8px;
+      color: var(--accent);
+      background: var(--panel-strong);
+      font-family: var(--mono);
+      font-size: 2rem;
+      font-weight: 800;
+      white-space: pre;
+    }
+
+    .details h2 {
+      margin: 0.9rem 0 0.35rem;
+      font-size: 1.25rem;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 0.45rem;
+      margin: 0.75rem 0 0;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .snippet {
+      margin-top: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem;
+      overflow-x: auto;
+      color: var(--text);
+      background: var(--bg);
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      color: var(--muted);
+      background: var(--panel);
+    }
+
+    @media (max-width: 840px) {
+      .top,
+      .toolbar,
+      .layout {
+        grid-template-columns: 1fr;
       }
 
-      .meta {
-        margin-left: 0;
+      .details {
+        position: static;
       }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
+  <main class="wrap">
+    <header class="top">
       <div>
         <h1>unicode-animatio</h1>
-        <div class="sub">__CATALOG_COUNT__ terminal animations served from local Python data</div>
+        <div class="sub">
+          __CATALOG_COUNT__ deterministic Unicode and ASCII terminal animations,
+          with category metadata for host-owned renderers.
+        </div>
       </div>
-      <button class="toggle" id="themeToggle" type="button">Theme</button>
-    </div>
+      <button class="button" id="themeToggle" type="button">Theme</button>
+    </header>
 
-    <div class="panel" id="spinnerPanel"></div>
+    <section class="toolbar" aria-label="Gallery controls">
+      <input
+        class="search"
+        id="searchInput"
+        type="search"
+        placeholder="Search names, categories, tags..."
+        autocomplete="off"
+      />
+      <button class="button" id="motionToggle" type="button" aria-pressed="false">
+        Reduced motion
+      </button>
+      <button class="button" id="copyCurrent" type="button">Copy snippet</button>
+    </section>
 
-    <div class="foot">
-      CLI: <code>unicode-animatio --list</code> | <code>unicode-animatio helix</code>
-    </div>
-  </div>
+    <nav class="chips" id="categoryChips" aria-label="Category filters"></nav>
+
+    <section class="layout">
+      <div>
+        <div class="gallery" id="spinnerGallery"></div>
+        <div class="empty" id="emptyState" hidden>No matching animations.</div>
+      </div>
+      <aside class="details" id="detailsPanel" aria-live="polite"></aside>
+    </section>
+  </main>
 
   <script>
-    const panel = document.getElementById('spinnerPanel');
-    const els = {};
+    const gallery = document.getElementById('spinnerGallery');
+    const emptyState = document.getElementById('emptyState');
+    const detailsPanel = document.getElementById('detailsPanel');
+    const searchInput = document.getElementById('searchInput');
+    const categoryChips = document.getElementById('categoryChips');
+    const motionToggle = document.getElementById('motionToggle');
+    const copyCurrent = document.getElementById('copyCurrent');
+    const frameEls = {};
+    let spinners = {};
+    let activeCategory = 'all';
+    let selectedName = '';
+    let reducedMotion = false;
 
-    function buildRows(spinners) {
-      Object.entries(spinners).forEach(([name, s]) => {
-        const row = document.createElement('div');
-        row.className = 'row';
+    function spinnerSnippet(name) {
+      return [
+        'from unicode_animations import get_provider',
+        '',
+        'provider = get_provider()',
+        `animation = provider.get('${name}')`,
+      ].join('\\n');
+    }
 
-        const frame = document.createElement('span');
-        frame.className = 'frame';
-        frame.textContent = s.frames[0];
+    async function copyText(text) {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      textArea.remove();
+    }
 
-        const label = document.createElement('span');
-        label.className = 'name';
-        label.textContent = name;
+    function matchesSearch(name, spinner) {
+      const query = searchInput.value.trim().toLowerCase();
+      const text = [name, spinner.category, ...spinner.tags].join(' ').toLowerCase();
+      const categoryMatch = activeCategory === 'all' || spinner.category === activeCategory;
+      return categoryMatch && (!query || text.includes(query));
+    }
 
-        const meta = document.createElement('span');
-        meta.className = 'meta';
-        meta.textContent = `${s.category} / ${s.frames.length}f / ${s.interval}ms`;
-
-        row.append(frame, label, meta);
-        panel.appendChild(row);
-        els[name] = frame;
+    function renderChips() {
+      const categories = ['all', ...new Set(Object.values(spinners).map((s) => s.category))];
+      categoryChips.replaceChildren();
+      categories.forEach((category) => {
+        const button = document.createElement('button');
+        button.className = 'chip';
+        button.type = 'button';
+        button.textContent = category;
+        button.setAttribute('aria-pressed', String(category === activeCategory));
+        button.addEventListener('click', () => {
+          activeCategory = category;
+          renderChips();
+          renderGallery();
+        });
+        categoryChips.appendChild(button);
       });
     }
 
-    function startAnimation(spinners) {
+    function buildCard(name, spinner) {
+      const card = document.createElement('button');
+      card.className = 'card';
+      card.type = 'button';
+      card.dataset.category = spinner.category;
+      card.dataset.motion = spinner.motion;
+      card.setAttribute('aria-selected', String(name === selectedName));
+      card.addEventListener('click', () => {
+        selectedName = name;
+        renderGallery();
+        renderDetails();
+      });
+
+      const frame = document.createElement('div');
+      frame.className = 'frame';
+      frame.textContent = spinner.preview_frame;
+      frameEls[name] = frame;
+
+      const title = document.createElement('div');
+      title.className = 'card-title';
+      title.innerHTML = `<span>${name}</span><span class="category">${spinner.category}</span>`;
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = `${spinner.frame_count} frames / ${spinner.interval_ms}ms`;
+
+      const tags = document.createElement('div');
+      tags.className = 'tags';
+      spinner.tags.forEach((tag) => {
+        const tagEl = document.createElement('span');
+        tagEl.className = 'tag';
+        tagEl.textContent = tag;
+        tags.appendChild(tagEl);
+      });
+
+      card.append(frame, title, meta, tags);
+      return card;
+    }
+
+    function renderGallery() {
+      gallery.replaceChildren();
+      Object.keys(frameEls).forEach((key) => delete frameEls[key]);
+      const visible = Object.entries(spinners).filter(([name, spinner]) => {
+        return matchesSearch(name, spinner);
+      });
+
+      visible.forEach(([name, spinner]) => gallery.appendChild(buildCard(name, spinner)));
+      emptyState.hidden = visible.length > 0;
+      if (!visible.some(([name]) => name === selectedName) && visible.length > 0) {
+        selectedName = visible[0][0];
+      }
+      renderDetails();
+    }
+
+    function renderDetails() {
+      const spinner = spinners[selectedName];
+      if (!spinner) {
+        detailsPanel.replaceChildren();
+        return;
+      }
+
+      const tagMarkup = spinner.tags.map((tag) => {
+        return `<span class="tag">${tag}</span>`;
+      }).join('');
+      detailsPanel.innerHTML = `
+        <div class="detail-frame" id="detailFrame">${spinner.preview_frame}</div>
+        <h2>${selectedName}</h2>
+        <div class="tags">${tagMarkup}</div>
+        <div class="detail-list">
+          <div>category: ${spinner.category}</div>
+          <div>use: ${spinner.description}</div>
+          <div>frames: ${spinner.frame_count}</div>
+          <div>interval: ${spinner.interval_ms}ms</div>
+          <div>width: ${spinner.frame_width}</div>
+          <div>motion: ${spinner.motion}</div>
+        </div>
+        <pre class="snippet"><code>${spinnerSnippet(selectedName)}</code></pre>
+      `;
+      frameEls.__detail = document.getElementById('detailFrame');
+    }
+
+    function startAnimation() {
       const byInterval = {};
-      Object.entries(spinners).forEach(([name, s]) => {
-        if (!byInterval[s.interval]) byInterval[s.interval] = [];
-        byInterval[s.interval].push({ name, frames: s.frames, i: 0 });
+      Object.entries(spinners).forEach(([name, spinner]) => {
+        if (!byInterval[spinner.interval_ms]) byInterval[spinner.interval_ms] = [];
+        byInterval[spinner.interval_ms].push({ name, frames: spinner.frames, i: 0 });
       });
 
       Object.entries(byInterval).forEach(([interval, group]) => {
         window.setInterval(() => {
+          if (reducedMotion) return;
           group.forEach((entry) => {
             entry.i = (entry.i + 1) % entry.frames.length;
-            els[entry.name].textContent = entry.frames[entry.i];
+            if (frameEls[entry.name]) frameEls[entry.name].textContent = entry.frames[entry.i];
+            if (entry.name === selectedName && frameEls.__detail) {
+              frameEls.__detail.textContent = entry.frames[entry.i];
+            }
           });
         }, Number(interval));
       });
@@ -232,23 +531,60 @@ def build_demo_html() -> str:
 
     async function init() {
       const response = await fetch('/spinners.json');
-      const spinnerData = await response.json();
-      buildRows(spinnerData);
-      startAnimation(spinnerData);
+      spinners = await response.json();
+      selectedName = Object.keys(spinners)[0] || '';
+      renderChips();
+      renderGallery();
+      startAnimation();
     }
 
-    init();
+    searchInput.addEventListener('input', renderGallery);
+    motionToggle.addEventListener('click', () => {
+      reducedMotion = !reducedMotion;
+      motionToggle.setAttribute('aria-pressed', String(reducedMotion));
+    });
+    copyCurrent.addEventListener('click', async () => {
+      if (!selectedName) return;
+      await copyText(spinnerSnippet(selectedName));
+      copyCurrent.textContent = 'Copied';
+      window.setTimeout(() => { copyCurrent.textContent = 'Copy snippet'; }, 1000);
+    });
 
-    const toggle = document.getElementById('themeToggle');
-    toggle.addEventListener('click', () => {
+    document.getElementById('themeToggle').addEventListener('click', () => {
       const dark = document.documentElement.dataset.theme === 'dark';
       document.documentElement.dataset.theme = dark ? 'light' : 'dark';
     });
+
+    init();
   </script>
 </body>
 </html>
 """
-    return html.replace("__CATALOG_COUNT__", str(len(SPINNER_NAMES)))
+
+
+def build_spinner_payload() -> dict[str, SpinnerPayload]:
+    """Return JSON-friendly spinner data for the web preview."""
+    payload: dict[str, SpinnerPayload] = {}
+    for name in SPINNER_NAMES:
+        metadata = metadata_for_spinner(name)
+        payload[name] = {
+            "frames": list(spinners[name].frames),
+            "interval": metadata.interval_ms,
+            "interval_ms": metadata.interval_ms,
+            "category": metadata.category,
+            "tags": list(metadata.tags),
+            "frame_count": metadata.frame_count,
+            "frame_width": metadata.frame_width,
+            "preview_frame": metadata.preview_frame,
+            "motion": metadata.motion,
+            "description": metadata.description,
+        }
+    return payload
+
+
+def build_demo_html() -> str:
+    """Return demo HTML that loads spinner data from /spinners.json."""
+    return DEMO_HTML_TEMPLATE.replace("__CATALOG_COUNT__", str(len(SPINNER_NAMES)))
 
 
 def create_demo_server(host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:

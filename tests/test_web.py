@@ -18,15 +18,24 @@ def test_build_spinner_payload_shape() -> None:
         assert len(entry["frames"]) > 0
         assert isinstance(entry["interval"], int)
         assert entry["interval"] > 0
+        assert entry["interval_ms"] == entry["interval"]
         assert entry["category"] == SPINNER_CATEGORIES[name]
+        assert entry["tags"]
+        assert entry["frame_count"] == len(entry["frames"])
+        assert entry["frame_width"] >= 1
+        assert entry["preview_frame"] == entry["frames"][0]
+        assert entry["motion"] in {"low", "medium", "high"}
+        assert entry["description"]
 
 
 def test_build_demo_html_contains_expected_markers() -> None:
     html = build_demo_html()
     assert "unicode-animatio" in html
-    assert f"{len(SPINNER_NAMES)} terminal animations" in html
+    assert f"{len(SPINNER_NAMES)} deterministic Unicode" in html
     assert "18 braille spinner animations" not in html
-    assert "spinnerPanel" in html
+    assert "spinnerGallery" in html
+    assert "Reduced motion" in html
+    assert "Copy snippet" in html
     assert "fetch('/spinners.json')" in html
 
 

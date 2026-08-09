@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from unicode_animations import CATEGORY_NAMES, SPINNER_NAMES, cli, spinner_names_for_category
@@ -35,6 +37,59 @@ def test_main_filters_list_by_category(capsys) -> None:
     assert "terminalblink" not in captured.out
 
 
+def test_main_searches_by_name_category_and_tags(capsys) -> None:
+    assert cli.main(["--search", "knowledge", "--category", "graph"]) == 0
+
+    captured = capsys.readouterr()
+    assert '4 graph matching "knowledge" spinners available:' in captured.out
+    assert "edgepulse" in captured.out
+    assert "terminalblink" not in captured.out
+
+
+def test_main_show_prints_spinner_metadata(capsys) -> None:
+    assert cli.main(["--show", "edgepulse"]) == 0
+
+    captured = capsys.readouterr()
+    assert "edgepulse" in captured.out
+    assert "category: graph" in captured.out
+    assert "tags: nodes, edges, knowledge" in captured.out
+    assert "python: provider.get('edgepulse')" in captured.out
+
+
+def test_main_prints_json_for_scripted_catalog_use(capsys) -> None:
+    assert cli.main(["--list", "--category", "graph", "--json"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert [entry["name"] for entry in payload] == list(spinner_names_for_category("graph"))
+    assert payload[0]["category"] == "graph"
+    assert payload[0]["tags"] == ["nodes", "edges", "knowledge"]
+
+
+def test_main_show_json_includes_frames(capsys) -> None:
+    assert cli.main(["--show", "edgepulse", "--json"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["name"] == "edgepulse"
+    assert payload["category"] == "graph"
+    assert payload["frames"]
+
+
+def test_main_rejects_json_without_inspection_mode(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["--json"])
+
+    assert exc_info.value.code == 2
+    assert "--json requires --list, --categories, --search, or --show" in capsys.readouterr().err
+
+
+def test_main_rejects_search_with_positional_name(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["edgepulse", "--search", "edge"])
+
+    assert exc_info.value.code == 2
+    assert "--search cannot be combined with a spinner name" in capsys.readouterr().err
+
+
 def test_main_rejects_unknown_category(capsys) -> None:
     with pytest.raises(SystemExit) as exc_info:
         cli.main(["--list", "--category", "unknown"])
@@ -48,7 +103,7 @@ def test_main_requires_list_for_category(capsys) -> None:
         cli.main(["--category", "graph"])
 
     assert exc_info.value.code == 2
-    assert "--category requires --list" in capsys.readouterr().err
+    assert "--category requires --list or --search" in capsys.readouterr().err
 
 
 def test_main_rejects_unknown_spinner_name(capsys) -> None:

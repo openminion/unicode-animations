@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from dataclasses import dataclass
+from typing import Literal, cast
 
 from .braille import Spinner
 from .braille import spinners as _braille_spinners
@@ -19,6 +20,22 @@ CategoryName = Literal[
     "alert",
     "dense",
 ]
+
+
+@dataclass(frozen=True)
+class SpinnerMetadata:
+    """Public metadata for choosing a spinner without reading frame internals."""
+
+    name: str
+    category: str
+    tags: tuple[str, ...]
+    frame_count: int
+    interval_ms: int
+    frame_width: int
+    preview_frame: str
+    motion: str
+    description: str
+
 
 SpinnerName = Literal[
     "braille",
@@ -261,11 +278,91 @@ SPINNER_CATEGORIES: dict[SpinnerName, CategoryName] = {
     "shimmergrid": "dense",
 }
 
+CATEGORY_TAGS: dict[CategoryName, tuple[str, ...]] = {
+    "subtle": ("calm", "minimal", "status"),
+    "scan": ("inspection", "directional", "active"),
+    "build": ("assembly", "progress", "work"),
+    "thinking": ("agent", "reasoning", "ambient"),
+    "tool": ("operation", "terminal", "action"),
+    "data": ("stream", "ingestion", "flow"),
+    "graph": ("nodes", "edges", "knowledge"),
+    "progress": ("meter", "completion", "task"),
+    "alert": ("attention", "pulse", "status"),
+    "dense": ("visual", "high-energy", "showcase"),
+}
+
+CATEGORY_DESCRIPTIONS: dict[CategoryName, str] = {
+    "subtle": "quiet background status for long-running work",
+    "scan": "inspection, search, and navigation states",
+    "build": "assembly and construction-style progress",
+    "thinking": "agent reasoning and waiting states",
+    "tool": "terminal and tool execution states",
+    "data": "streaming, ingestion, and packet movement",
+    "graph": "knowledge graph and relationship traversal",
+    "progress": "explicit loading or completion movement",
+    "alert": "attention states that should still stay lightweight",
+    "dense": "public demos and high-energy showcase moments",
+}
+
+CATEGORY_MOTION: dict[CategoryName, str] = {
+    "subtle": "low",
+    "scan": "medium",
+    "build": "medium",
+    "thinking": "low",
+    "tool": "medium",
+    "data": "medium",
+    "graph": "medium",
+    "progress": "medium",
+    "alert": "high",
+    "dense": "high",
+}
+
+
+def metadata_for_spinner(name: str) -> SpinnerMetadata:
+    if name not in spinners:
+        raise KeyError(name)
+    spinner_name = cast(SpinnerName, name)
+    spinner = spinners[spinner_name]
+    category = SPINNER_CATEGORIES[spinner_name]
+    return SpinnerMetadata(
+        name=spinner_name,
+        category=category,
+        tags=CATEGORY_TAGS[category],
+        frame_count=len(spinner.frames),
+        interval_ms=spinner.interval,
+        frame_width=max(len(frame) for frame in spinner.frames),
+        preview_frame=spinner.frames[0],
+        motion=CATEGORY_MOTION[category],
+        description=CATEGORY_DESCRIPTIONS[category],
+    )
+
+
+def all_spinner_metadata() -> tuple[SpinnerMetadata, ...]:
+    return tuple(metadata_for_spinner(name) for name in SPINNER_NAMES)
+
 
 def spinner_names_for_category(category: str) -> tuple[SpinnerName, ...]:
     if category not in CATEGORY_NAMES:
         raise KeyError(category)
     return tuple(name for name in SPINNER_NAMES if SPINNER_CATEGORIES[name] == category)
+
+
+def search_spinner_names(query: str, *, category: str | None = None) -> tuple[SpinnerName, ...]:
+    if category is not None and category not in CATEGORY_NAMES:
+        raise KeyError(category)
+
+    normalized_query = query.strip().lower()
+    names = SPINNER_NAMES if category is None else spinner_names_for_category(category)
+    if not normalized_query:
+        return names
+
+    matches: list[SpinnerName] = []
+    for name in names:
+        metadata = metadata_for_spinner(name)
+        search_text = " ".join((metadata.name, metadata.category, *metadata.tags)).lower()
+        if normalized_query in search_text:
+            matches.append(name)
+    return tuple(matches)
 
 
 BrailleSpinnerName = SpinnerName
@@ -274,11 +371,17 @@ BRAILLE_SPINNER_NAMES = SPINNER_NAMES
 __all__ = [
     "BRAILLE_SPINNER_NAMES",
     "CATEGORY_NAMES",
+    "CATEGORY_DESCRIPTIONS",
+    "CATEGORY_MOTION",
     "SPINNER_CATEGORIES",
     "SPINNER_NAMES",
     "BrailleSpinnerName",
     "CategoryName",
     "SpinnerName",
+    "SpinnerMetadata",
+    "all_spinner_metadata",
+    "metadata_for_spinner",
+    "search_spinner_names",
     "spinner_names_for_category",
     "spinners",
 ]

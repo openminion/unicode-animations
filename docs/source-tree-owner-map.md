@@ -23,13 +23,14 @@ public package boundary stays explicit.
 - `src/unicode_animations/braille.py`
   - original braille frame data, grid helpers, and deterministic frame generation
 - `src/unicode_animations/catalog.py`
-  - canonical mixed Unicode/ASCII catalog, categories, and compatibility names
+  - canonical mixed Unicode/ASCII catalog, categories, metadata, and search
 - `src/unicode_animations/cli.py`
-  - terminal preview CLI
+  - terminal preview CLI and scriptable catalog inspection
 - `src/unicode_animations/provider.py`
   - structural provider entry point for applications that consume frame data
+    and metadata
 - `src/unicode_animations/web.py`
-  - local browser demo server and web CLI
+  - local browser gallery, JSON payload, demo server, and web CLI
 - `src/unicode_animations/__main__.py`
   - `python -m unicode_animations` entrypoint
 
