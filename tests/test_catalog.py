@@ -12,6 +12,9 @@ from unicode_animations import (
     CATEGORY_NAMES,
     SPINNER_CATEGORIES,
     SPINNER_NAMES,
+    all_spinner_metadata,
+    metadata_for_spinner,
+    search_spinner_names,
     spinner_names_for_category,
     spinners,
 )
@@ -62,9 +65,38 @@ def test_existing_category_mapping_matches_reviewed_contract() -> None:
     assert SPINNER_CATEGORIES["checkerboard"] == "dense"
 
 
+def test_metadata_surfaces_match_catalog_records() -> None:
+    metadata = metadata_for_spinner("edgepulse")
+
+    assert metadata.name == "edgepulse"
+    assert metadata.category == "graph"
+    assert metadata.tags == ("nodes", "edges", "knowledge")
+    assert metadata.frame_count == len(spinners["edgepulse"].frames)
+    assert metadata.interval_ms == spinners["edgepulse"].interval
+    assert metadata.frame_width == max(len(frame) for frame in spinners["edgepulse"].frames)
+    assert metadata.preview_frame == spinners["edgepulse"].frames[0]
+    assert metadata.motion == "medium"
+    assert "relationship" in metadata.description
+    assert all_spinner_metadata()[SPINNER_NAMES.index("edgepulse")] == metadata
+
+
+def test_search_spinner_names_matches_name_category_and_tags() -> None:
+    assert search_spinner_names("edgepulse") == ("edgepulse",)
+    assert search_spinner_names("knowledge", category="graph") == (
+        "nodes",
+        "edgepulse",
+        "cluster",
+        "orbitnodes",
+    )
+    assert search_spinner_names("knowledge", category="data") == ()
+
+
 def test_unknown_category_raises_key_error() -> None:
     with pytest.raises(KeyError, match="unknown"):
         spinner_names_for_category("unknown")
+
+    with pytest.raises(KeyError, match="unknown"):
+        search_spinner_names("anything", category="unknown")
 
 
 @pytest.mark.parametrize("name", SPINNER_NAMES)

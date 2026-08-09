@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -11,8 +12,10 @@ from dataclasses import dataclass
 
 from .catalog import (
     CATEGORY_NAMES,
-    SPINNER_CATEGORIES,
     SPINNER_NAMES,
+    SpinnerMetadata,
+    metadata_for_spinner,
+    search_spinner_names,
     spinner_names_for_category,
     spinners,
 )
@@ -106,8 +109,15 @@ def _build_parser() -> argparse.ArgumentParser:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("-l", "--list", action="store_true", help="List available spinners")
     mode.add_argument("--categories", action="store_true", help="List spinner categories")
+    mode.add_argument("--show", metavar="NAME", help="Show one spinner preset")
     mode.add_argument("-w", "--web", action="store_true", help="Open browser demo")
-    parser.add_argument("--category", choices=CATEGORY_NAMES, help="Filter --list by category")
+    parser.add_argument("--category", choices=CATEGORY_NAMES, help="Filter --list or --search")
+    parser.add_argument(
+        "--search",
+        metavar="TEXT",
+        help="Search preset names, categories, and tags",
+    )
+    parser.add_argument("--json", action="store_true", help="Print machine-readable JSON")
     parser.add_argument("--port", type=int, default=0, help="Port for --web mode (default: auto)")
     parser.add_argument(
         "--color",
@@ -124,23 +134,98 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _print_categories() -> None:
+def _metadata_payload(
+    metadata: SpinnerMetadata,
+    *,
+    include_frames: bool = False,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "name": metadata.name,
+        "category": metadata.category,
+        "tags": list(metadata.tags),
+        "frame_count": metadata.frame_count,
+        "interval_ms": metadata.interval_ms,
+        "frame_width": metadata.frame_width,
+        "preview_frame": metadata.preview_frame,
+        "motion": metadata.motion,
+        "description": metadata.description,
+    }
+    if include_frames:
+        payload["frames"] = list(spinners[metadata.name].frames)
+    return payload
+
+
+def _print_json(value: object) -> None:
+    print(json.dumps(value, ensure_ascii=False, indent=2))
+
+
+def _print_categories(*, json_output: bool = False) -> None:
+    if json_output:
+        _print_json(
+            [
+                {
+                    "name": category,
+                    "count": len(spinner_names_for_category(category)),
+                }
+                for category in CATEGORY_NAMES
+            ]
+        )
+        return
+
     print(f"{len(CATEGORY_NAMES)} categories available:\n")
     for category in CATEGORY_NAMES:
         print(f"  {category} ({len(spinner_names_for_category(category))} spinners)")
 
 
-def _print_list(category: str | None = None) -> None:
-    names = SPINNER_NAMES if category is None else spinner_names_for_category(category)
-    label = "spinners" if category is None else f"{category} spinners"
+def _print_list(
+    *,
+    category: str | None = None,
+    search: str = "",
+    json_output: bool = False,
+) -> None:
+    names = search_spinner_names(search, category=category)
+    metadata = tuple(metadata_for_spinner(name) for name in names)
+    if json_output:
+        _print_json([_metadata_payload(item) for item in metadata])
+        return
+
+    label_parts = []
+    if category is not None:
+        label_parts.append(category)
+    if search:
+        label_parts.append(f'matching "{search}"')
+    label = " ".join((*label_parts, "spinners")) if label_parts else "spinners"
     print(f"{len(names)} {label} available:\n")
-    for name in names:
-        spinner = spinners[name]
-        category_name = SPINNER_CATEGORIES[name]
+    for item in metadata:
         print(
-            f"  {spinner.frames[0]}  {name} "
-            f"[{category_name}] ({len(spinner.frames)} frames, {spinner.interval}ms)"
+            f"  {item.preview_frame}  {item.name} "
+            f"[{item.category}] ({item.frame_count} frames, {item.interval_ms}ms) "
+            f"tags: {', '.join(item.tags)}"
         )
+
+
+def _print_show(name: str, *, json_output: bool = False) -> int:
+    if name not in spinners:
+        print(f'Unknown spinner: "{name}"', file=sys.stderr)
+        print("Run with --list to see all spinners.", file=sys.stderr)
+        return 1
+
+    metadata = metadata_for_spinner(name)
+    if json_output:
+        _print_json(_metadata_payload(metadata, include_frames=True))
+        return 0
+
+    print(f"{metadata.name}")
+    print(f"  category: {metadata.category}")
+    print(f"  tags: {', '.join(metadata.tags)}")
+    print(f"  frames: {metadata.frame_count}")
+    print(f"  interval: {metadata.interval_ms}ms")
+    print(f"  width: {metadata.frame_width}")
+    print(f"  motion: {metadata.motion}")
+    print(f"  use: {metadata.description}")
+    print(f"  preview: {metadata.preview_frame}")
+    print(f"  python: provider.get({metadata.name!r})")
+    return 0
 
 
 def _animate(
@@ -208,18 +293,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    if args.category and not args.list:
-        parser.error("--category requires --list")
+    if args.category and not (args.list or args.search):
+        parser.error("--category requires --list or --search")
+    if args.json and not (args.list or args.categories or args.show or args.search):
+        parser.error("--json requires --list, --categories, --search, or --show")
+    if args.search and args.name:
+        parser.error("--search cannot be combined with a spinner name")
+    if args.show and args.name:
+        parser.error("--show cannot be combined with a spinner name")
 
     if args.web:
         return serve_demo(port=args.port, open_browser=True)
 
+    if args.show:
+        return _print_show(args.show, json_output=args.json)
+
     if args.list:
-        _print_list(args.category)
+        _print_list(category=args.category, search=args.search or "", json_output=args.json)
+        return 0
+
+    if args.search:
+        _print_list(category=args.category, search=args.search, json_output=args.json)
         return 0
 
     if args.categories:
-        _print_categories()
+        _print_categories(json_output=args.json)
         return 0
 
     if args.name and args.name not in spinners:

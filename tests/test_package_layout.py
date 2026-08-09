@@ -14,6 +14,7 @@ PUBLIC_MARKDOWN = [
     ROOT / "docs" / "cleanup-workflow.md",
     ROOT / "docs" / "code-quality-enforcement.md",
     ROOT / "docs" / "engineering-patterns.md",
+    ROOT / "docs" / "getting-started.md",
     ROOT / "docs" / "source-tree-owner-map.md",
     ROOT / "CONTRIBUTING.md",
 ]

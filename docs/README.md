@@ -9,6 +9,7 @@ frames, preset metadata, and local preview tools.
 | If you want to... | Read |
 | --- | --- |
 | Install the package and run a first preset | [Getting started](getting-started.md) |
+| Browse the catalog visually or script preset discovery | [Getting started](getting-started.md) |
 | Understand package ownership and file layout | [Source tree owner map](source-tree-owner-map.md) |
 | Contribute without adding avoidable complexity | [Engineering patterns](engineering-patterns.md) |
 | Run the expected checks | [Code quality enforcement](code-quality-enforcement.md) |

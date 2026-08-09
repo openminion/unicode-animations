@@ -25,7 +25,13 @@ The package currently treats these names as public:
 - `SPINNER_NAMES`
 - `CategoryName`
 - `CATEGORY_NAMES`
+- `CATEGORY_DESCRIPTIONS`
+- `CATEGORY_MOTION`
 - `SPINNER_CATEGORIES`
+- `SpinnerMetadata`
+- `all_spinner_metadata`
+- `metadata_for_spinner`
+- `search_spinner_names`
 - `spinner_names_for_category`
 - `BrailleSpinnerName`
 - `BRAILLE_SPINNER_NAMES`
@@ -54,9 +60,22 @@ consume animation frames without importing CLI preview code:
 - name: `unicode`
 - target: `unicode_animations.provider:get_provider`
 
-Provider payloads are raw frame strings and millisecond timing only. Renderer
-colors, backgrounds, labels, layout, and accessibility policy are not part of
-the provider contract.
+Provider payloads are raw frame strings, millisecond timing, and preset
+selection metadata. Renderer colors, backgrounds, labels, layout, and
+accessibility policy are not part of the provider contract.
+
+`AnimationSpec` now also carries metadata fields for host integrations:
+
+- `category`
+- `tags`
+- `frame_count`
+- `frame_width`
+- `motion`
+- `description`
+
+Those fields are additive and defaulted so older four-argument construction of
+`AnimationSpec(provider_id, name, frames, interval_ms)` remains source
+compatible.
 
 ## Catalog naming compatibility
 
@@ -68,6 +87,23 @@ imports. New integrations should use the canonical general names.
 Every canonical name has exactly one value in `SPINNER_CATEGORIES`.
 `spinner_names_for_category()` returns names in catalog order and raises
 `KeyError` for an unknown category.
+`metadata_for_spinner()` returns a `SpinnerMetadata` record for one preset.
+`all_spinner_metadata()` returns metadata in catalog order.
+`search_spinner_names()` searches names, categories, and tags in catalog order
+and raises `KeyError` for an unknown category filter.
+
+## CLI inspection compatibility
+
+The terminal CLI supports human-readable and JSON inspection:
+
+- `unicode-animatio --show NAME`
+- `unicode-animatio --search TEXT`
+- `unicode-animatio --list --category CATEGORY --json`
+- `unicode-animatio --show NAME --json`
+
+JSON output is intended for host discovery and smoke tests. The exact browser
+demo markup remains non-contract, but `/spinners.json` exposes the same
+metadata shape used by the gallery.
 
 ## Compatibility policy
 
