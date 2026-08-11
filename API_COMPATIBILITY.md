@@ -77,6 +77,11 @@ Those fields are additive and defaulted so older four-argument construction of
 `AnimationSpec(provider_id, name, frames, interval_ms)` remains source
 compatible.
 
+`UnicodeAnimationProvider.get(name, *, length=1)` may repeat each frame into a
+single synchronized animation. `length=1` preserves the original frame data;
+larger positive values multiply `frame_width` while preserving frame count and
+timing.
+
 ## Catalog naming compatibility
 
 `SpinnerName` and `SPINNER_NAMES` are the canonical mixed Unicode/ASCII

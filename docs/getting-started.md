@@ -62,6 +62,16 @@ print(search_spinner_names("knowledge", category="graph"))
 print(metadata_for_spinner("edgepulse").tags)
 ```
 
+Provider integrations can request a synchronized wider animation without
+changing its timing:
+
+```python
+from unicode_animations import get_provider
+
+animation = get_provider().get("edgepulse", length=3)
+print(animation.frames)
+```
+
 ## Validation baseline
 
 ```bash

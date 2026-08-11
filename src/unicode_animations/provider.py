@@ -43,20 +43,20 @@ class UnicodeAnimationProvider:
     def describe(self, name: str) -> SpinnerMetadata:
         return metadata_for_spinner(name)
 
-    def get(self, name: str) -> AnimationSpec:
-        if name not in spinners:
-            raise KeyError(name)
-        spinner = spinners[name]
+    def get(self, name: str, *, length: int = 1) -> AnimationSpec:
+        if length < 1:
+            raise ValueError("length must be positive")
         metadata = metadata_for_spinner(name)
+        spinner = spinners[metadata.name]
         return AnimationSpec(
             provider_id=self.provider_id,
-            name=name,
-            frames=tuple(spinner.frames),
+            name=metadata.name,
+            frames=tuple(frame * length for frame in spinner.frames),
             interval_ms=int(spinner.interval),
             category=metadata.category,
             tags=metadata.tags,
             frame_count=metadata.frame_count,
-            frame_width=metadata.frame_width,
+            frame_width=metadata.frame_width * length,
             motion=metadata.motion,
             description=metadata.description,
         )
