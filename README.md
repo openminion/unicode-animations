@@ -156,6 +156,7 @@ from unicode_animations import get_provider
 
 provider = get_provider()
 animation = provider.get("helix")
+wide_animation = provider.get("helix", length=3)
 metadata = provider.describe("helix")
 
 print(provider.provider_id)
@@ -163,6 +164,10 @@ print(animation.frames)
 print(animation.interval_ms)
 print(metadata.tags)
 ```
+
+`length` repeats each frame in sync, so a host can request a wider animation
+without combining independently phased indicators. It defaults to `1` and
+does not change the frame count or interval.
 
 The provider exposes structural animation records with `frames`, `interval_ms`,
 category, tags, frame count, width hints, motion hints, and usage descriptions.
