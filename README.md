@@ -257,7 +257,10 @@ unicode-animatio-web --port 8765
 
 The browser gallery includes category chips, search, theme toggle,
 reduced-motion toggle, a selected-preset details panel, and a copyable provider
-snippet for host integration.
+snippet for host integration. It starts from the operating system's color and
+reduced-motion preferences, remembers explicit choices, supports arrow-key
+preset selection, and announces copy results and empty searches to assistive
+technology.
 
 For a remote development machine:
 
@@ -299,7 +302,8 @@ command.
 - terminal UI or async rendering frameworks
 - progress bars, task orchestration, or job-state tracking
 - renderer colors, backgrounds, labels, or layout
-- automatic reduced-motion or accessibility policy beyond metadata hints
+- provider-level reduced-motion or accessibility policy beyond metadata hints;
+  the bundled browser preview manages only its own presentation preferences
 - hosted demos or remote APIs
 - framework-specific Rich, Textual, or Typer adapters
 
