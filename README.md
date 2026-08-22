@@ -259,8 +259,8 @@ The browser gallery includes category chips, search, theme toggle,
 reduced-motion toggle, a selected-preset details panel, and a copyable provider
 snippet for host integration. It starts from the operating system's color and
 reduced-motion preferences, remembers explicit choices, supports arrow-key
-preset selection, and announces copy results and empty searches to assistive
-technology.
+preset selection, shows live filter-result counts, and announces copy and
+search status to assistive technology.
 
 For a remote development machine:
 

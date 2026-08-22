@@ -63,7 +63,11 @@ def test_build_demo_html_exposes_keyboard_selection_and_live_status() -> None:
     assert "event.key === 'End'" in html
     assert 'aria-hidden="true"' in html
     assert 'id="copyStatus"' in html
+    assert 'id="resultsStatus"' in html
+    assert 'aria-describedby="resultsStatus"' in html
     assert 'id="emptyState"' in html
+    assert 'aria-label="Search animations"' in html
+    assert "resultsStatus.textContent" in html
     assert "emptyState.textContent = visible.length > 0 ? '' : 'No matching animations.'" in html
     assert html.count('role="status"') == 2
     assert html.count('aria-live="polite"') == 1

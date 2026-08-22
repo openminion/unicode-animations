@@ -160,7 +160,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       display: flex;
       flex-wrap: wrap;
       gap: 0.45rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.65rem;
     }
 
     .chip {
@@ -176,6 +176,13 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       border-color: var(--accent);
       color: var(--text);
       background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+    }
+
+    .results-status {
+      margin-bottom: 0.9rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.78rem;
     }
 
     .layout {
@@ -369,6 +376,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
         class="search"
         id="searchInput"
         type="search"
+        aria-label="Search animations"
         placeholder="Search names, categories, tags..."
         autocomplete="off"
       />
@@ -381,6 +389,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="visually-hidden" id="copyStatus" role="status"></div>
 
     <nav class="chips" id="categoryChips" aria-label="Category filters"></nav>
+    <div class="results-status" id="resultsStatus" role="status"></div>
 
     <section class="layout">
       <div>
@@ -389,8 +398,9 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
           id="spinnerGallery"
           role="listbox"
           aria-label="Animation presets"
+          aria-describedby="resultsStatus"
         ></div>
-        <div class="empty" id="emptyState" role="status" hidden></div>
+        <div class="empty" id="emptyState" hidden></div>
       </div>
       <aside class="details" id="detailsPanel" aria-live="polite"></aside>
     </section>
@@ -402,6 +412,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     const detailsPanel = document.getElementById('detailsPanel');
     const searchInput = document.getElementById('searchInput');
     const categoryChips = document.getElementById('categoryChips');
+    const resultsStatus = document.getElementById('resultsStatus');
     const motionToggle = document.getElementById('motionToggle');
     const copyCurrent = document.getElementById('copyCurrent');
     const copyStatus = document.getElementById('copyStatus');
@@ -462,13 +473,6 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       textArea.select();
       document.execCommand('copy');
       textArea.remove();
-    }
-
-    function matchesSearch(name, spinner) {
-      const query = searchInput.value.trim().toLowerCase();
-      const text = [name, spinner.category, ...spinner.tags].join(' ').toLowerCase();
-      const categoryMatch = activeCategory === 'all' || spinner.category === activeCategory;
-      return categoryMatch && (!query || text.includes(query));
     }
 
     function renderChips() {
@@ -564,8 +568,11 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       gallery.replaceChildren();
       Object.keys(frameEls).forEach((key) => delete frameEls[key]);
       Object.keys(cardEls).forEach((key) => delete cardEls[key]);
+      const query = searchInput.value.trim().toLowerCase();
       const visible = Object.entries(spinners).filter(([name, spinner]) => {
-        return matchesSearch(name, spinner);
+        const categoryMatch = activeCategory === 'all' || spinner.category === activeCategory;
+        const text = [name, spinner.category, ...spinner.tags].join(' ').toLowerCase();
+        return categoryMatch && (!query || text.includes(query));
       });
 
       if (!visible.some(([name]) => name === selectedName) && visible.length > 0) {
@@ -573,6 +580,10 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       }
       if (visible.length === 0) selectedName = '';
       visible.forEach(([name, spinner]) => gallery.appendChild(buildCard(name, spinner)));
+      const noun = visible.length === 1 ? 'animation' : 'animations';
+      const category = activeCategory === 'all' ? '' : `${activeCategory} `;
+      const match = query ? ` matching “${query}”` : '';
+      resultsStatus.textContent = `${visible.length} ${category}${noun}${match}`;
       emptyState.hidden = visible.length > 0;
       emptyState.textContent = visible.length > 0 ? '' : 'No matching animations.';
       renderDetails();

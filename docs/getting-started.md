@@ -47,7 +47,7 @@ The browser preview models the intended integration controls: category filters,
 search, reduced motion, selected-preset details, and copyable provider snippets.
 It follows system color and motion preferences until the user makes a saved
 choice, supports arrow-key preset selection, and exposes live copy and
-empty-search status to assistive technology.
+filter-result status to assistive technology.
 
 Category-aware Python API:
 
