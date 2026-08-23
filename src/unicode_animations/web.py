@@ -83,6 +83,17 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       font: inherit;
     }
 
+    button:focus-visible,
+    input:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 72%, transparent);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
     .wrap {
       max-width: 1160px;
       margin: 0 auto;
@@ -149,7 +160,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       display: flex;
       flex-wrap: wrap;
       gap: 0.45rem;
-      margin-bottom: 1rem;
+      margin-bottom: 0.65rem;
     }
 
     .chip {
@@ -165,6 +176,13 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       border-color: var(--accent);
       color: var(--text);
       background: color-mix(in srgb, var(--accent) 18%, var(--panel));
+    }
+
+    .results-status {
+      margin-bottom: 0.9rem;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.78rem;
     }
 
     .layout {
@@ -315,6 +333,18 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       background: var(--panel);
     }
 
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     @media (max-width: 840px) {
       .top,
       .toolbar,
@@ -338,7 +368,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
           with category metadata for host-owned renderers.
         </div>
       </div>
-      <button class="button" id="themeToggle" type="button">Theme</button>
+      <button class="button" id="themeToggle" type="button">Light theme</button>
     </header>
 
     <section class="toolbar" aria-label="Gallery controls">
@@ -346,21 +376,31 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
         class="search"
         id="searchInput"
         type="search"
+        aria-label="Search animations"
         placeholder="Search names, categories, tags..."
         autocomplete="off"
       />
       <button class="button" id="motionToggle" type="button" aria-pressed="false">
         Reduced motion
       </button>
-      <button class="button" id="copyCurrent" type="button">Copy snippet</button>
+      <button class="button" id="copyCurrent" type="button" disabled>Copy snippet</button>
     </section>
 
+    <div class="visually-hidden" id="copyStatus" role="status"></div>
+
     <nav class="chips" id="categoryChips" aria-label="Category filters"></nav>
+    <div class="results-status" id="resultsStatus" role="status"></div>
 
     <section class="layout">
       <div>
-        <div class="gallery" id="spinnerGallery"></div>
-        <div class="empty" id="emptyState" hidden>No matching animations.</div>
+        <div
+          class="gallery"
+          id="spinnerGallery"
+          role="listbox"
+          aria-label="Animation presets"
+          aria-describedby="resultsStatus"
+        ></div>
+        <div class="empty" id="emptyState" hidden></div>
       </div>
       <aside class="details" id="detailsPanel" aria-live="polite"></aside>
     </section>
@@ -372,13 +412,46 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     const detailsPanel = document.getElementById('detailsPanel');
     const searchInput = document.getElementById('searchInput');
     const categoryChips = document.getElementById('categoryChips');
+    const resultsStatus = document.getElementById('resultsStatus');
     const motionToggle = document.getElementById('motionToggle');
     const copyCurrent = document.getElementById('copyCurrent');
+    const copyStatus = document.getElementById('copyStatus');
+    const themeToggle = document.getElementById('themeToggle');
+    const themePreferenceKey = 'unicode-animatio:theme';
+    const motionPreferenceKey = 'unicode-animatio:motion';
     const frameEls = {};
+    const cardEls = {};
     let spinners = {};
     let activeCategory = 'all';
     let selectedName = '';
     let reducedMotion = false;
+
+    function setTheme(theme) {
+      document.documentElement.dataset.theme = theme;
+      const nextTheme = theme === 'dark' ? 'light' : 'dark';
+      themeToggle.textContent = `${nextTheme[0].toUpperCase()}${nextTheme.slice(1)} theme`;
+    }
+
+    function setReducedMotion(value) {
+      reducedMotion = value;
+      motionToggle.setAttribute('aria-pressed', String(reducedMotion));
+      if (!reducedMotion) return;
+      Object.entries(spinners).forEach(([name, spinner]) => {
+        if (frameEls[name]) frameEls[name].textContent = spinner.preview_frame;
+      });
+      if (frameEls.__detail && spinners[selectedName]) {
+        frameEls.__detail.textContent = spinners[selectedName].preview_frame;
+      }
+    }
+
+    function initializePreferences() {
+      const savedTheme = window.localStorage.getItem(themePreferenceKey);
+      const savedMotion = window.localStorage.getItem(motionPreferenceKey);
+      const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches;
+      const systemMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTheme(savedTheme || (systemTheme ? 'light' : 'dark'));
+      setReducedMotion(savedMotion ? savedMotion === 'reduce' : systemMotion);
+    }
 
     function spinnerSnippet(name) {
       return [
@@ -402,13 +475,6 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       textArea.remove();
     }
 
-    function matchesSearch(name, spinner) {
-      const query = searchInput.value.trim().toLowerCase();
-      const text = [name, spinner.category, ...spinner.tags].join(' ').toLowerCase();
-      const categoryMatch = activeCategory === 'all' || spinner.category === activeCategory;
-      return categoryMatch && (!query || text.includes(query));
-    }
-
     function renderChips() {
       const categories = ['all', ...new Set(Object.values(spinners).map((s) => s.category))];
       categoryChips.replaceChildren();
@@ -420,28 +486,60 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
         button.setAttribute('aria-pressed', String(category === activeCategory));
         button.addEventListener('click', () => {
           activeCategory = category;
-          renderChips();
+          categoryChips.querySelectorAll('.chip').forEach((chip) => {
+            chip.setAttribute('aria-pressed', String(chip.textContent === activeCategory));
+          });
           renderGallery();
         });
         categoryChips.appendChild(button);
       });
     }
 
+    function selectSpinner(name) {
+      selectedName = name;
+      Object.entries(cardEls).forEach(([cardName, card]) => {
+        const selected = cardName === selectedName;
+        card.setAttribute('aria-selected', String(selected));
+        card.tabIndex = selected ? 0 : -1;
+      });
+      renderDetails();
+      cardEls[name].focus();
+    }
+
+    function moveCardSelection(name, event) {
+      const names = Object.keys(cardEls);
+      const current = names.indexOf(name);
+      const offsets = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
+      let next = current;
+      if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = names.length - 1;
+      else if (event.key in offsets) {
+        next = (current + offsets[event.key] + names.length) % names.length;
+      } else {
+        return;
+      }
+      event.preventDefault();
+      selectSpinner(names[next]);
+    }
+
     function buildCard(name, spinner) {
       const card = document.createElement('button');
       card.className = 'card';
       card.type = 'button';
+      card.setAttribute('role', 'option');
       card.dataset.category = spinner.category;
       card.dataset.motion = spinner.motion;
       card.setAttribute('aria-selected', String(name === selectedName));
+      card.tabIndex = name === selectedName ? 0 : -1;
       card.addEventListener('click', () => {
-        selectedName = name;
-        renderGallery();
-        renderDetails();
+        selectSpinner(name);
       });
+      card.addEventListener('keydown', (event) => moveCardSelection(name, event));
+      cardEls[name] = card;
 
       const frame = document.createElement('div');
       frame.className = 'frame';
+      frame.setAttribute('aria-hidden', 'true');
       frame.textContent = spinner.preview_frame;
       frameEls[name] = frame;
 
@@ -469,15 +567,25 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     function renderGallery() {
       gallery.replaceChildren();
       Object.keys(frameEls).forEach((key) => delete frameEls[key]);
+      Object.keys(cardEls).forEach((key) => delete cardEls[key]);
+      const query = searchInput.value.trim().toLowerCase();
       const visible = Object.entries(spinners).filter(([name, spinner]) => {
-        return matchesSearch(name, spinner);
+        const categoryMatch = activeCategory === 'all' || spinner.category === activeCategory;
+        const text = [name, spinner.category, ...spinner.tags].join(' ').toLowerCase();
+        return categoryMatch && (!query || text.includes(query));
       });
 
-      visible.forEach(([name, spinner]) => gallery.appendChild(buildCard(name, spinner)));
-      emptyState.hidden = visible.length > 0;
       if (!visible.some(([name]) => name === selectedName) && visible.length > 0) {
         selectedName = visible[0][0];
       }
+      if (visible.length === 0) selectedName = '';
+      visible.forEach(([name, spinner]) => gallery.appendChild(buildCard(name, spinner)));
+      const noun = visible.length === 1 ? 'animation' : 'animations';
+      const category = activeCategory === 'all' ? '' : `${activeCategory} `;
+      const match = query ? ` matching “${query}”` : '';
+      resultsStatus.textContent = `${visible.length} ${category}${noun}${match}`;
+      emptyState.hidden = visible.length > 0;
+      emptyState.textContent = visible.length > 0 ? '' : 'No matching animations.';
       renderDetails();
     }
 
@@ -485,14 +593,18 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       const spinner = spinners[selectedName];
       if (!spinner) {
         detailsPanel.replaceChildren();
+        detailsPanel.hidden = true;
+        copyCurrent.disabled = true;
         return;
       }
 
+      detailsPanel.hidden = false;
+      copyCurrent.disabled = false;
       const tagMarkup = spinner.tags.map((tag) => {
         return `<span class="tag">${tag}</span>`;
       }).join('');
       detailsPanel.innerHTML = `
-        <div class="detail-frame" id="detailFrame">${spinner.preview_frame}</div>
+        <div class="detail-frame" id="detailFrame" aria-hidden="true">${spinner.preview_frame}</div>
         <h2>${selectedName}</h2>
         <div class="tags">${tagMarkup}</div>
         <div class="detail-list">
@@ -530,6 +642,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     async function init() {
+      initializePreferences();
       const response = await fetch('/spinners.json');
       spinners = await response.json();
       selectedName = Object.keys(spinners)[0] || '';
@@ -540,19 +653,23 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
 
     searchInput.addEventListener('input', renderGallery);
     motionToggle.addEventListener('click', () => {
-      reducedMotion = !reducedMotion;
-      motionToggle.setAttribute('aria-pressed', String(reducedMotion));
+      const nextValue = !reducedMotion;
+      setReducedMotion(nextValue);
+      window.localStorage.setItem(motionPreferenceKey, nextValue ? 'reduce' : 'full');
     });
     copyCurrent.addEventListener('click', async () => {
-      if (!selectedName) return;
+      copyStatus.textContent = '';
       await copyText(spinnerSnippet(selectedName));
       copyCurrent.textContent = 'Copied';
+      copyStatus.textContent = `${selectedName} snippet copied.`;
       window.setTimeout(() => { copyCurrent.textContent = 'Copy snippet'; }, 1000);
     });
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
+    themeToggle.addEventListener('click', () => {
       const dark = document.documentElement.dataset.theme === 'dark';
-      document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+      const nextTheme = dark ? 'light' : 'dark';
+      setTheme(nextTheme);
+      window.localStorage.setItem(themePreferenceKey, nextTheme);
     });
 
     init();

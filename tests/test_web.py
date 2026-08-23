@@ -39,6 +39,40 @@ def test_build_demo_html_contains_expected_markers() -> None:
     assert "fetch('/spinners.json')" in html
 
 
+def test_build_demo_html_honors_and_persists_display_preferences() -> None:
+    html = build_demo_html()
+
+    assert "(prefers-color-scheme: light)" in html
+    assert "(prefers-reduced-motion: reduce)" in html
+    assert "unicode-animatio:theme" in html
+    assert "unicode-animatio:motion" in html
+    assert "window.localStorage.getItem" in html
+    assert "window.localStorage.setItem" in html
+    assert "setReducedMotion(savedMotion ? savedMotion === 'reduce' : systemMotion)" in html
+
+
+def test_build_demo_html_exposes_keyboard_selection_and_live_status() -> None:
+    html = build_demo_html()
+
+    assert 'role="listbox"' in html
+    assert "card.setAttribute('role', 'option')" in html
+    assert "card.tabIndex = name === selectedName ? 0 : -1" in html
+    assert "ArrowLeft" in html
+    assert "ArrowRight" in html
+    assert "event.key === 'Home'" in html
+    assert "event.key === 'End'" in html
+    assert 'aria-hidden="true"' in html
+    assert 'id="copyStatus"' in html
+    assert 'id="resultsStatus"' in html
+    assert 'aria-describedby="resultsStatus"' in html
+    assert 'id="emptyState"' in html
+    assert 'aria-label="Search animations"' in html
+    assert "resultsStatus.textContent" in html
+    assert "emptyState.textContent = visible.length > 0 ? '' : 'No matching animations.'" in html
+    assert html.count('role="status"') == 2
+    assert html.count('aria-live="polite"') == 1
+
+
 def test_demo_server_serves_index_and_spinner_json() -> None:
     server = create_demo_server(port=0)
     host, port = server.server_address
