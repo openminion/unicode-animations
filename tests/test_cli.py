@@ -41,9 +41,12 @@ def test_main_searches_by_name_category_and_tags(capsys) -> None:
     assert cli.main(["--search", "knowledge", "--category", "graph"]) == 0
 
     captured = capsys.readouterr()
-    assert '4 graph matching "knowledge" spinners available:' in captured.out
+    assert '4 graph spinners matching "knowledge" available:' in captured.out
     assert "edgepulse" in captured.out
     assert "terminalblink" not in captured.out
+
+    assert cli.main(["--search", "edgepulse", "--category", "graph"]) == 0
+    assert '1 graph spinner matching "edgepulse" available:' in capsys.readouterr().out
 
 
 def test_main_show_prints_spinner_metadata(capsys) -> None:

@@ -189,13 +189,10 @@ def _print_list(
         _print_json([_metadata_payload(item) for item in metadata])
         return
 
-    label_parts = []
-    if category is not None:
-        label_parts.append(category)
-    if search:
-        label_parts.append(f'matching "{search}"')
-    label = " ".join((*label_parts, "spinners")) if label_parts else "spinners"
-    print(f"{len(names)} {label} available:\n")
+    category_label = f"{category} " if category else ""
+    noun = "spinner" if len(names) == 1 else "spinners"
+    match_label = f' matching "{search}"' if search else ""
+    print(f"{len(names)} {category_label}{noun}{match_label} available:\n")
     for item in metadata:
         print(
             f"  {item.preview_frame}  {item.name} "

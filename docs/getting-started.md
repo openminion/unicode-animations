@@ -9,9 +9,8 @@ and execution summary for work inside the `unicode-animatio` repo.
 
 ```bash
 cd unicode-animatio
-python3.11 -m venv .venv
+make dev-install
 source .venv/bin/activate
-python3.11 -m pip install -e ".[dev]"
 ```
 
 ## Read first
@@ -78,7 +77,8 @@ print(animation.frames)
 ## Validation baseline
 
 ```bash
-python3 -m pytest -q
-python3 -m ruff check .
-python3 scripts/release_check.py
+make check
 ```
+
+Run `make release-check` when packaging, public imports, entry points, or wheel
+contents change.

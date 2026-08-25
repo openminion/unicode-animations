@@ -278,6 +278,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     .details {
       position: sticky;
       top: 1rem;
+      scroll-margin-top: 1rem;
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1rem;
@@ -347,12 +348,20 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
 
     @media (max-width: 840px) {
       .top,
-      .toolbar,
       .layout {
         grid-template-columns: 1fr;
       }
 
+      .toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .search {
+        grid-column: 1 / -1;
+      }
+
       .details {
+        order: -1;
         position: static;
       }
     }
@@ -533,6 +542,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       card.tabIndex = name === selectedName ? 0 : -1;
       card.addEventListener('click', () => {
         selectSpinner(name);
+        if (window.matchMedia('(max-width: 840px)').matches) detailsPanel.scrollIntoView();
       });
       card.addEventListener('keydown', (event) => moveCardSelection(name, event));
       cardEls[name] = card;
