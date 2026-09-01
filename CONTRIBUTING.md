@@ -30,14 +30,11 @@ Requires Python 3.11+ for the shared local quality loop.
 git clone https://github.com/openminion/unicode-animatio.git unicode-animatio
 cd unicode-animatio
 
-# 2. Create and activate a virtualenv
-python3.11 -m venv .venv
+# 2. Create the virtualenv and install in editable mode with dev extras
+make dev-install
 source .venv/bin/activate
 
-# 3. Install in editable mode with dev extras
-make dev-install
-
-# 4. Install local hooks, including commit-message enforcement
+# 3. Install local hooks, including commit-message enforcement
 make hooks-install
 ```
 

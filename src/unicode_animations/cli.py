@@ -10,6 +10,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from . import __version__
 from .catalog import (
     CATEGORY_NAMES,
     SPINNER_NAMES,
@@ -105,6 +106,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="unicode-animatio",
         description="Preview Unicode and ASCII terminal animations.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("name", nargs="?", help="Spinner name to preview")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("-l", "--list", action="store_true", help="List available spinners")
@@ -189,13 +191,10 @@ def _print_list(
         _print_json([_metadata_payload(item) for item in metadata])
         return
 
-    label_parts = []
-    if category is not None:
-        label_parts.append(category)
-    if search:
-        label_parts.append(f'matching "{search}"')
-    label = " ".join((*label_parts, "spinners")) if label_parts else "spinners"
-    print(f"{len(names)} {label} available:\n")
+    category_label = f"{category} " if category else ""
+    noun = "spinner" if len(names) == 1 else "spinners"
+    match_label = f' matching "{search}"' if search else ""
+    print(f"{len(names)} {category_label}{noun}{match_label} available:\n")
     for item in metadata:
         print(
             f"  {item.preview_frame}  {item.name} "

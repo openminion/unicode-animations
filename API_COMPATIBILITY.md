@@ -51,6 +51,8 @@ The package currently treats these console scripts as public:
 - `unicode-animatio`
 - `unicode-animatio-web`
 
+Both commands expose `--version` using the installed package version.
+
 ## Provider entry point
 
 The package declares this structural provider entry point for applications that

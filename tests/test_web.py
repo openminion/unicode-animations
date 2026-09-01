@@ -4,8 +4,10 @@ import json
 import threading
 import urllib.request
 
-from unicode_animations import SPINNER_CATEGORIES, SPINNER_NAMES
-from unicode_animations.web import build_demo_html, build_spinner_payload, create_demo_server
+import pytest
+
+from unicode_animations import SPINNER_CATEGORIES, SPINNER_NAMES, __version__
+from unicode_animations.web import build_demo_html, build_spinner_payload, create_demo_server, main
 
 
 def test_build_spinner_payload_shape() -> None:
@@ -38,6 +40,10 @@ def test_build_demo_html_contains_expected_markers() -> None:
     assert "Copy snippet" in html
     assert "fetch('/spinners.json')" in html
 
+    details_start = html.index('<aside class="details"')
+    details_end = html.index("</aside>", details_start)
+    assert details_start < html.index('id="copyCurrent"') < details_end
+
 
 def test_build_demo_html_honors_and_persists_display_preferences() -> None:
     html = build_demo_html()
@@ -68,9 +74,20 @@ def test_build_demo_html_exposes_keyboard_selection_and_live_status() -> None:
     assert 'id="emptyState"' in html
     assert 'aria-label="Search animations"' in html
     assert "resultsStatus.textContent" in html
+    assert "const query = searchInput.value.trim();" in html
+    assert "const normalizedQuery = query.toLowerCase();" in html
+    assert "matching “${query}”" in html
     assert "emptyState.textContent = visible.length > 0 ? '' : 'No matching animations.'" in html
     assert html.count('role="status"') == 2
     assert html.count('aria-live="polite"') == 1
+
+
+def test_main_prints_version(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--version"])
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out == f"unicode-animatio-web {__version__}\n"
 
 
 def test_demo_server_serves_index_and_spinner_json() -> None:

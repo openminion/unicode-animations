@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://www.openminion.com/brand/openminion-logo.png" alt="Unicode Animatio logo" width="128" />
+  <img src="docs/assets/readme-hero.png" alt="Unicode Animatio — terminal motion without the framework" width="100%" />
 </p>
 
 <h1 align="center">Unicode Animatio</h1>
@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/unicode-animatio/"><img alt="PyPI" src="https://img.shields.io/badge/pypi-v0.0.8-3775A9"></a>
+  <a href="https://pypi.org/project/unicode-animatio/"><img alt="PyPI" src="https://img.shields.io/pypi/v/unicode-animatio?cacheSeconds=300"></a>
   <a href="https://pypi.org/project/unicode-animatio/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/unicode-animatio?cacheSeconds=300"></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
   <img alt="Status" src="https://img.shields.io/badge/status-beta-5B8DEF">
@@ -72,6 +72,7 @@ unicode-animatio --list
 unicode-animatio --categories
 unicode-animatio --search graph --json
 unicode-animatio --show edgepulse
+unicode-animatio --version
 unicode-animatio helix
 unicode-animatio-web --port 8765
 ```
@@ -210,6 +211,7 @@ the raw records but are not application UI frameworks.
 | `unicode-animatio --list --category graph` | Lists only graph presets |
 | `unicode-animatio --search knowledge --category graph` | Searches names, categories, and tags |
 | `unicode-animatio --show edgepulse` | Shows one preset with integration metadata |
+| `unicode-animatio --version` | Prints the installed package version |
 | `unicode-animatio --list --category graph --json` | Prints machine-readable metadata |
 | `unicode-animatio` | Cycles through the full catalog in a terminal |
 | `unicode-animatio helix` | Runs one preset until interrupted |
@@ -313,6 +315,15 @@ frames and timing only.
 ## Available animations
 
 The catalog currently contains 58 deterministic animations:
+
+<details>
+<summary><strong>View the complete catalog poster</strong></summary>
+
+<p align="center">
+  <img src="docs/assets/catalog-poster.png" alt="Unicode Animatio catalog — 58 animations across 10 categories" width="100%" />
+</p>
+
+</details>
 
 | Category | Presets |
 | --- | --- |

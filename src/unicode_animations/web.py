@@ -10,6 +10,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import TypedDict
 from urllib.parse import urlparse
 
+from . import __version__
 from .catalog import (
     SPINNER_NAMES,
     metadata_for_spinner,
@@ -124,7 +125,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
 
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(12rem, 1fr) auto auto;
+      grid-template-columns: minmax(12rem, 1fr) auto;
       gap: 0.7rem;
       align-items: center;
       margin-bottom: 0.8rem;
@@ -278,6 +279,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     .details {
       position: sticky;
       top: 1rem;
+      scroll-margin-top: 1rem;
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1rem;
@@ -325,6 +327,11 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       white-space: pre-wrap;
     }
 
+    .detail-copy {
+      width: 100%;
+      margin-top: 0.75rem;
+    }
+
     .empty {
       border: 1px dashed var(--border);
       border-radius: 8px;
@@ -347,12 +354,16 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
 
     @media (max-width: 840px) {
       .top,
-      .toolbar,
       .layout {
         grid-template-columns: 1fr;
       }
 
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
       .details {
+        order: -1;
         position: static;
       }
     }
@@ -383,7 +394,6 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       <button class="button" id="motionToggle" type="button" aria-pressed="false">
         Reduced motion
       </button>
-      <button class="button" id="copyCurrent" type="button" disabled>Copy snippet</button>
     </section>
 
     <div class="visually-hidden" id="copyStatus" role="status"></div>
@@ -402,7 +412,12 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
         ></div>
         <div class="empty" id="emptyState" hidden></div>
       </div>
-      <aside class="details" id="detailsPanel" aria-live="polite"></aside>
+      <aside class="details" id="detailsPanel">
+        <div id="detailsContent" aria-live="polite"></div>
+        <button class="button detail-copy" id="copyCurrent" type="button" disabled>
+          Copy snippet
+        </button>
+      </aside>
     </section>
   </main>
 
@@ -410,6 +425,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     const gallery = document.getElementById('spinnerGallery');
     const emptyState = document.getElementById('emptyState');
     const detailsPanel = document.getElementById('detailsPanel');
+    const detailsContent = document.getElementById('detailsContent');
     const searchInput = document.getElementById('searchInput');
     const categoryChips = document.getElementById('categoryChips');
     const resultsStatus = document.getElementById('resultsStatus');
@@ -533,6 +549,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       card.tabIndex = name === selectedName ? 0 : -1;
       card.addEventListener('click', () => {
         selectSpinner(name);
+        if (window.matchMedia('(max-width: 840px)').matches) detailsPanel.scrollIntoView();
       });
       card.addEventListener('keydown', (event) => moveCardSelection(name, event));
       cardEls[name] = card;
@@ -568,11 +585,12 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       gallery.replaceChildren();
       Object.keys(frameEls).forEach((key) => delete frameEls[key]);
       Object.keys(cardEls).forEach((key) => delete cardEls[key]);
-      const query = searchInput.value.trim().toLowerCase();
+      const query = searchInput.value.trim();
+      const normalizedQuery = query.toLowerCase();
       const visible = Object.entries(spinners).filter(([name, spinner]) => {
         const categoryMatch = activeCategory === 'all' || spinner.category === activeCategory;
         const text = [name, spinner.category, ...spinner.tags].join(' ').toLowerCase();
-        return categoryMatch && (!query || text.includes(query));
+        return categoryMatch && (!normalizedQuery || text.includes(normalizedQuery));
       });
 
       if (!visible.some(([name]) => name === selectedName) && visible.length > 0) {
@@ -592,7 +610,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     function renderDetails() {
       const spinner = spinners[selectedName];
       if (!spinner) {
-        detailsPanel.replaceChildren();
+        detailsContent.replaceChildren();
         detailsPanel.hidden = true;
         copyCurrent.disabled = true;
         return;
@@ -603,7 +621,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
       const tagMarkup = spinner.tags.map((tag) => {
         return `<span class="tag">${tag}</span>`;
       }).join('');
-      detailsPanel.innerHTML = `
+      detailsContent.innerHTML = `
         <div class="detail-frame" id="detailFrame" aria-hidden="true">${spinner.preview_frame}</div>
         <h2>${selectedName}</h2>
         <div class="tags">${tagMarkup}</div>
@@ -784,6 +802,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="unicode-animatio-web",
         description="Run a local browser demo for unicode_animations.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=0, help="Port to bind (default: auto)")
     parser.add_argument(

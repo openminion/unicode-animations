@@ -4,7 +4,13 @@ import json
 
 import pytest
 
-from unicode_animations import CATEGORY_NAMES, SPINNER_NAMES, cli, spinner_names_for_category
+from unicode_animations import (
+    CATEGORY_NAMES,
+    SPINNER_NAMES,
+    __version__,
+    cli,
+    spinner_names_for_category,
+)
 
 
 def test_main_list_prints_all_spinner_names(capsys) -> None:
@@ -26,6 +32,14 @@ def test_main_lists_categories_with_counts(capsys) -> None:
         assert f"{category} ({count} spinners)" in captured.out
 
 
+def test_main_prints_version(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["--version"])
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out == f"unicode-animatio {__version__}\n"
+
+
 def test_main_filters_list_by_category(capsys) -> None:
     assert cli.main(["--list", "--category", "graph"]) == 0
 
@@ -41,9 +55,12 @@ def test_main_searches_by_name_category_and_tags(capsys) -> None:
     assert cli.main(["--search", "knowledge", "--category", "graph"]) == 0
 
     captured = capsys.readouterr()
-    assert '4 graph matching "knowledge" spinners available:' in captured.out
+    assert '4 graph spinners matching "knowledge" available:' in captured.out
     assert "edgepulse" in captured.out
     assert "terminalblink" not in captured.out
+
+    assert cli.main(["--search", "edgepulse", "--category", "graph"]) == 0
+    assert '1 graph spinner matching "edgepulse" available:' in capsys.readouterr().out
 
 
 def test_main_show_prints_spinner_metadata(capsys) -> None:
