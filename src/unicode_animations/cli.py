@@ -10,6 +10,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from . import __version__
 from .catalog import (
     CATEGORY_NAMES,
     SPINNER_NAMES,
@@ -105,6 +106,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="unicode-animatio",
         description="Preview Unicode and ASCII terminal animations.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("name", nargs="?", help="Spinner name to preview")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("-l", "--list", action="store_true", help="List available spinners")

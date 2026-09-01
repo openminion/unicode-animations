@@ -4,7 +4,13 @@ import json
 
 import pytest
 
-from unicode_animations import CATEGORY_NAMES, SPINNER_NAMES, cli, spinner_names_for_category
+from unicode_animations import (
+    CATEGORY_NAMES,
+    SPINNER_NAMES,
+    __version__,
+    cli,
+    spinner_names_for_category,
+)
 
 
 def test_main_list_prints_all_spinner_names(capsys) -> None:
@@ -24,6 +30,14 @@ def test_main_lists_categories_with_counts(capsys) -> None:
     for category in CATEGORY_NAMES:
         count = len(spinner_names_for_category(category))
         assert f"{category} ({count} spinners)" in captured.out
+
+
+def test_main_prints_version(capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["--version"])
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out == f"unicode-animatio {__version__}\n"
 
 
 def test_main_filters_list_by_category(capsys) -> None:

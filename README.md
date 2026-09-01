@@ -72,6 +72,7 @@ unicode-animatio --list
 unicode-animatio --categories
 unicode-animatio --search graph --json
 unicode-animatio --show edgepulse
+unicode-animatio --version
 unicode-animatio helix
 unicode-animatio-web --port 8765
 ```
@@ -210,6 +211,7 @@ the raw records but are not application UI frameworks.
 | `unicode-animatio --list --category graph` | Lists only graph presets |
 | `unicode-animatio --search knowledge --category graph` | Searches names, categories, and tags |
 | `unicode-animatio --show edgepulse` | Shows one preset with integration metadata |
+| `unicode-animatio --version` | Prints the installed package version |
 | `unicode-animatio --list --category graph --json` | Prints machine-readable metadata |
 | `unicode-animatio` | Cycles through the full catalog in a terminal |
 | `unicode-animatio helix` | Runs one preset until interrupted |
