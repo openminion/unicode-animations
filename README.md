@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme-hero.png" alt="Unicode Animatio — terminal motion without the framework" width="100%" />
+  <img src="https://raw.githubusercontent.com/openminion/unicode-animatio/main/docs/assets/readme-hero.png" alt="Unicode Animatio — terminal motion without the framework" width="100%" />
 </p>
 
 <h1 align="center">Unicode Animatio</h1>
@@ -322,7 +322,7 @@ Prefer a visual overview? Expand the complete catalog poster below.
 <summary><strong>Visual catalog poster — click to expand</strong> (58 animations across 10 categories)</summary>
 
 <p align="center">
-  <img src="docs/assets/catalog-poster.png" alt="Unicode Animatio catalog — 58 animations across 10 categories" width="100%" />
+  <img src="https://raw.githubusercontent.com/openminion/unicode-animatio/main/docs/assets/catalog-poster.png" alt="Unicode Animatio catalog — 58 animations across 10 categories" width="100%" />
 </p>
 
 </details>
