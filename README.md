@@ -316,8 +316,10 @@ frames and timing only.
 
 The catalog currently contains 58 deterministic animations:
 
+Prefer a visual overview? Expand the complete catalog poster below.
+
 <details>
-<summary><strong>View the complete catalog poster</strong></summary>
+<summary><strong>Visual catalog poster — click to expand</strong> (58 animations across 10 categories)</summary>
 
 <p align="center">
   <img src="docs/assets/catalog-poster.png" alt="Unicode Animatio catalog — 58 animations across 10 categories" width="100%" />
