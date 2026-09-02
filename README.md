@@ -23,7 +23,7 @@
   <img alt="Status" src="https://img.shields.io/badge/status-beta-5B8DEF">
 </p>
 
-Unicode Animatio `v0.0.8` packages deterministic animation frames and timing
+Unicode Animatio `v0.0.9rc1` packages deterministic animation frames and timing
 for terminals and other text renderers. It has no runtime dependencies and
 does not take ownership of colors, labels, layout, progress, or task state.
 
@@ -58,7 +58,7 @@ and should be treated as a scam.
 | --- | --- |
 | Distribution | `unicode-animatio` |
 | Import root | `unicode_animations` |
-| Current line | `v0.0.8` beta |
+| Current line | `v0.0.9rc1` beta |
 | Python | 3.9+ |
 | Catalog | 58 animations across 10 categories |
 | Runtime dependencies | None |
