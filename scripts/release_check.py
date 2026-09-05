@@ -34,6 +34,7 @@ def _fresh_install_smoke() -> None:
         pip = venv_dir / "bin" / "pip"
         python = venv_dir / "bin" / "python"
         cli = venv_dir / "bin" / "unicode-animatio"
+        web_cli = venv_dir / "bin" / "unicode-animatio-web"
         _run(str(pip), "install", str(_dist_wheel()))
         _run(
             str(python),
@@ -48,6 +49,7 @@ def _fresh_install_smoke() -> None:
             ),
         )
         _run(str(cli), "--list")
+        _run(str(web_cli), "--version")
 
 
 def main(argv: list[str] | None = None) -> int:

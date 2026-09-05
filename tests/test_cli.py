@@ -107,6 +107,22 @@ def test_main_rejects_search_with_positional_name(capsys) -> None:
     assert "--search cannot be combined with a spinner name" in capsys.readouterr().err
 
 
+@pytest.mark.parametrize(
+    "args",
+    (
+        ["--show", "edgepulse", "--search", "graph"],
+        ["--categories", "--search", "graph"],
+        ["--web", "--search", "graph"],
+    ),
+)
+def test_main_rejects_search_with_other_modes(args, capsys) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(args)
+
+    assert exc_info.value.code == 2
+    assert "--search cannot be combined with" in capsys.readouterr().err
+
+
 def test_main_rejects_unknown_category(capsys) -> None:
     with pytest.raises(SystemExit) as exc_info:
         cli.main(["--list", "--category", "unknown"])
@@ -129,6 +145,14 @@ def test_main_rejects_unknown_spinner_name(capsys) -> None:
     captured = capsys.readouterr()
     assert 'Unknown spinner: "unknown-spinner"' in captured.err
     assert "Run with --list to see all spinners." in captured.err
+
+
+def test_main_shows_named_spinner_when_stdout_is_not_a_tty(capsys) -> None:
+    assert cli.main(["edgepulse"]) == 0
+
+    captured = capsys.readouterr()
+    assert captured.out.startswith("edgepulse\n")
+    assert f"{len(SPINNER_NAMES)} spinners available" not in captured.out
 
 
 def test_main_rejects_invalid_color_mode(capsys) -> None:

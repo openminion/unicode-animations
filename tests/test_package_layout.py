@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from unicode_animations import SPINNER_NAMES
@@ -45,6 +46,16 @@ def test_public_markdown_surfaces_avoid_machine_local_paths() -> None:
         text = path.read_text(encoding="utf-8")
         for fragment in blocked_fragments:
             assert fragment not in text, f"{path.name} leaked {fragment}"
+
+
+def test_readme_links_are_pypi_portable() -> None:
+    text = (ROOT / "README.md").read_text(encoding="utf-8")
+    links = [
+        html or markdown for html, markdown in re.findall(r'href="([^"]+)"|\]\(([^)]+)\)', text)
+    ]
+    relative_links = [link for link in links if not link.startswith(("https://", "#"))]
+
+    assert relative_links == []
 
 
 def test_readme_lists_all_spinner_families() -> None:

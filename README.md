@@ -12,18 +12,18 @@
   <a href="https://github.com/openminion/unicode-animatio">GitHub</a>
   · <a href="https://pypi.org/project/unicode-animatio/">PyPI</a>
   · <a href="https://www.openminion.com">Website</a>
-  · <a href="docs/README.md">Docs</a>
+  · <a href="https://github.com/openminion/unicode-animatio/tree/main/docs">Docs</a>
   · <a href="https://x.com/OpenMinion">X</a>
 </p>
 
 <p align="center">
   <a href="https://pypi.org/project/unicode-animatio/"><img alt="PyPI" src="https://img.shields.io/pypi/v/unicode-animatio?cacheSeconds=300"></a>
   <a href="https://pypi.org/project/unicode-animatio/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/unicode-animatio?cacheSeconds=300"></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
+  <a href="https://github.com/openminion/unicode-animatio/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
   <img alt="Status" src="https://img.shields.io/badge/status-beta-5B8DEF">
 </p>
 
-Unicode Animatio `v0.0.9` packages deterministic animation frames and timing
+Unicode Animatio packages deterministic animation frames and timing
 for terminals and other text renderers. It has no runtime dependencies and
 does not take ownership of colors, labels, layout, progress, or task state.
 
@@ -58,7 +58,7 @@ and should be treated as a scam.
 | --- | --- |
 | Distribution | `unicode-animatio` |
 | Import root | `unicode_animations` |
-| Current line | `v0.0.9` beta |
+| Maturity | Beta |
 | Python | 3.9+ |
 | Catalog | 58 animations across 10 categories |
 | Runtime dependencies | None |
@@ -396,22 +396,22 @@ surface.
 
 ## Docs and Release
 
-- [`docs/README.md`](docs/README.md): package documentation map
-- [`docs/getting-started.md`](docs/getting-started.md): package usage and
+- [`docs/README.md`](https://github.com/openminion/unicode-animatio/blob/main/docs/README.md): package documentation map
+- [`docs/getting-started.md`](https://github.com/openminion/unicode-animatio/blob/main/docs/getting-started.md): package usage and
   contributor bootstrap
-- [`docs/source-tree-owner-map.md`](docs/source-tree-owner-map.md): code owners
+- [`docs/source-tree-owner-map.md`](https://github.com/openminion/unicode-animatio/blob/main/docs/source-tree-owner-map.md): code owners
   and package layout
-- [`API_COMPATIBILITY.md`](API_COMPATIBILITY.md): public names and provider
+- [`API_COMPATIBILITY.md`](https://github.com/openminion/unicode-animatio/blob/main/API_COMPATIBILITY.md): public names and provider
   contract
-- [`RELEASING.md`](RELEASING.md): release and publish flow
+- [`RELEASING.md`](https://github.com/openminion/unicode-animatio/blob/main/RELEASING.md): release and publish flow
 
 Questions and bug reports belong in
 [GitHub Issues](https://github.com/openminion/unicode-animatio/issues).
 
 ## Community
 
-- [Contributing guide](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Contributing guide](https://github.com/openminion/unicode-animatio/blob/main/CONTRIBUTING.md)
+- [Code of Conduct](https://github.com/openminion/unicode-animatio/blob/main/CODE_OF_CONDUCT.md)
 - [GitHub Issues](https://github.com/openminion/unicode-animatio/issues)
 - [OpenMinion organization](https://github.com/openminion)
 

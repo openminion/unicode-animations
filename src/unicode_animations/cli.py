@@ -233,12 +233,13 @@ def _animate(
     color: str = "auto",
     foreground: str = "magenta",
 ) -> int:
-    names = list(SPINNER_NAMES)
-
     if not sys.stdout.isatty():
+        if name:
+            return _print_show(name)
         _print_list()
         return 0
 
+    names = list(SPINNER_NAMES)
     current = names.index(name) if name else 0
     single = name is not None
     frame_idx = 0
@@ -296,6 +297,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--category requires --list or --search")
     if args.json and not (args.list or args.categories or args.show or args.search):
         parser.error("--json requires --list, --categories, --search, or --show")
+    if args.search and (args.show or args.categories or args.web):
+        parser.error("--search cannot be combined with --show, --categories, or --web")
     if args.search and args.name:
         parser.error("--search cannot be combined with a spinner name")
     if args.show and args.name:
