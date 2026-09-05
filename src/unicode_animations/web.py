@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from . import __version__
 from .catalog import (
+    CATEGORY_NAMES,
     SPINNER_NAMES,
     metadata_for_spinner,
     spinners,
@@ -435,6 +436,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     const themeToggle = document.getElementById('themeToggle');
     const themePreferenceKey = 'unicode-animatio:theme';
     const motionPreferenceKey = 'unicode-animatio:motion';
+    const categoryNames = __CATEGORY_NAMES__;
     const frameEls = {};
     const cardEls = {};
     let spinners = {};
@@ -492,7 +494,7 @@ DEMO_HTML_TEMPLATE = """<!DOCTYPE html>
     }
 
     function renderChips() {
-      const categories = ['all', ...new Set(Object.values(spinners).map((s) => s.category))];
+      const categories = ['all', ...categoryNames];
       categoryChips.replaceChildren();
       categories.forEach((category) => {
         const button = document.createElement('button');
@@ -719,7 +721,9 @@ def build_spinner_payload() -> dict[str, SpinnerPayload]:
 
 def build_demo_html() -> str:
     """Return demo HTML that loads spinner data from /spinners.json."""
-    return DEMO_HTML_TEMPLATE.replace("__CATALOG_COUNT__", str(len(SPINNER_NAMES)))
+    return DEMO_HTML_TEMPLATE.replace("__CATALOG_COUNT__", str(len(SPINNER_NAMES))).replace(
+        "__CATEGORY_NAMES__", json.dumps(CATEGORY_NAMES)
+    )
 
 
 def create_demo_server(host: str = "127.0.0.1", port: int = 0) -> ThreadingHTTPServer:

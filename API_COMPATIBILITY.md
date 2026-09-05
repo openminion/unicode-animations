@@ -112,6 +112,9 @@ JSON output is intended for host discovery and smoke tests. The exact browser
 demo markup remains non-contract, but `/spinners.json` exposes the same
 metadata shape used by the gallery.
 
+A named terminal preview prints its static metadata when standard output is
+not interactive instead of emitting animation control sequences.
+
 ## Compatibility policy
 
 For the current beta surface:

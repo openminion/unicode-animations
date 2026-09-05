@@ -38,8 +38,12 @@ def _build_parser() -> argparse.ArgumentParser:
 def _print_list() -> None:
     print(f"{len(SPINNER_NAMES)} spinners:\n")
     for name in SPINNER_NAMES:
-        spinner = spinners[name]
-        print(f"  {spinner.frames[0]}  {name} ({len(spinner.frames)} frames, {spinner.interval}ms)")
+        _print_spinner(name)
+
+
+def _print_spinner(name: str) -> None:
+    spinner = spinners[name]
+    print(f"  {spinner.frames[0]}  {name} ({len(spinner.frames)} frames, {spinner.interval}ms)")
 
 
 def _animate(name: str, seconds: float) -> None:
@@ -68,7 +72,10 @@ def main() -> int:
         return 1
 
     if not sys.stdout.isatty():
-        _print_list()
+        if args.name:
+            _print_spinner(args.name)
+        else:
+            _print_list()
         return 0
 
     names = [args.name] if args.name else list(SPINNER_NAMES)

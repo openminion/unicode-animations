@@ -6,7 +6,7 @@ import urllib.request
 
 import pytest
 
-from unicode_animations import SPINNER_CATEGORIES, SPINNER_NAMES, __version__
+from unicode_animations import CATEGORY_NAMES, SPINNER_CATEGORIES, SPINNER_NAMES, __version__
 from unicode_animations.web import build_demo_html, build_spinner_payload, create_demo_server, main
 
 
@@ -39,6 +39,8 @@ def test_build_demo_html_contains_expected_markers() -> None:
     assert "Reduced motion" in html
     assert "Copy snippet" in html
     assert "fetch('/spinners.json')" in html
+    assert f"const categoryNames = {json.dumps(CATEGORY_NAMES)};" in html
+    assert "const categories = ['all', ...categoryNames];" in html
 
     details_start = html.index('<aside class="details"')
     details_end = html.index("</aside>", details_start)
